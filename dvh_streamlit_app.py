@@ -299,14 +299,14 @@ def calcular_metricas_avancadas(dose_prescricao, dose_max_body, dose_max_ptv, do
 def imprimir_metricas(metricas):
     print("\n📈 Métricas Calculadas:")
     for nome, valor in metricas.items():
-    if valor is not None:
-        if 'Raio efetivo' not in nome:  # 👈 NOVO FILTRO ADICIONADO
-            try:
-                st.write(f"🔹 {nome}: {valor:.4f}")
-            except Exception:
-                st.write(f"🔹 {nome}: {valor}")
-    else:
-        st.write(f"🔹 {nome}: não calculado (dados insuficientes)")
+        if valor is not None:
+            if 'Raio efetivo' not in nome:
+                try:
+                    st.write(f"🔹 {nome}: {valor:.4f}")
+                except Exception:
+                    st.write(f"🔹 {nome}: {valor}")
+        else:
+            st.write(f"🔹 {nome}: não calculado (dados insuficientes)")
 
 # bloco de código para coleta de métricas de volumes de dose associadas ao desenvolvimento de radionecrose
 
@@ -464,5 +464,6 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, envie um arquivo .txt de DVH para iniciar a análise.")
+
 
 
