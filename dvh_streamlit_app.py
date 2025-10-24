@@ -243,22 +243,15 @@ def calcular_metricas_avancadas(dose_prescricao, dose_max_body, dose_max_ptv, do
 
     # Raios efetivos
     try:
-        if volume_iso100:
-            r_iso100 = ((3 * volume_iso100) / (4 * math.pi)) ** (1.0 / 3.0)
-            metricas['Raio efetivo isodose100 (cm)'] = r_iso100
-        else:
-            metricas['Raio efetivo isodose100 (cm)'] = None
+        r_iso100 = ((3 * volume_iso100) / (4 * math.pi)) ** (1.0 / 3.0) if volume_iso100 else None
+        r_iso50 = ((3 * volume_iso50) / (4 * math.pi)) ** (1.0 / 3.0) if volume_iso50 else None
 
-        if volume_iso50:
-            r_iso50 = ((3 * volume_iso50) / (4 * math.pi)) ** (1.0 / 3.0)
-            metricas['Raio efetivo isodose50 (cm)'] = r_iso50
-        else:
-            metricas['Raio efetivo isodose50 (cm)'] = None
-
-        if metricas['Raio efetivo isodose50 (cm)'] is not None and metricas['Raio efetivo isodose100 (cm)'] is not None:
-            metricas['GI2 (raio50/raio100)'] = metricas['Raio efetivo isodose50 (cm)'] / metricas['Raio efetivo isodose100 (cm)']
+        # GI2 = raio50 / raio100
+        if r_iso50 is not None and r_iso100 is not None:
+            metricas['GI2 (raio50/raio100)'] = r_iso50 / r_iso100
         else:
             metricas['GI2 (raio50/raio100)'] = None
+            
     except Exception:
         metricas['Raio efetivo isodose100 (cm)'] = None
         metricas['Raio efetivo isodose50 (cm)'] = None
@@ -464,6 +457,7 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, envie um arquivo .txt de DVH para iniciar a análise.")
+
 
 
 
