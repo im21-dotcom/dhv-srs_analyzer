@@ -351,7 +351,7 @@ def imprimir_metricas_por_fracao(n_fracoes, volume_10gy=None, volume_12gy=None,
         print("❗ Número de frações inválido. Use 1, 3 ou 5.")
 
 # ------------------------- Interface Streamlit -------------------------
-st.title("Análise de DVH - Radioterapia (versão estendida)")
+st.title("Análise de DVH - Radioterapia")
 
 st.sidebar.header("Upload do Arquivo")
 uploaded_file = st.sidebar.file_uploader("Envie o arquivo .txt do DVH", type="txt")
@@ -395,7 +395,7 @@ if uploaded_file is not None:
     )
 
     # Impressão das métricas
-    st.subheader("📈 Métricas Calculadas (estendidas)")
+    st.subheader("📈 Métricas Calculadas")
     for nome, valor in metricas.items():
         if valor is not None:
             # Formatação especial para raios
@@ -427,7 +427,7 @@ if uploaded_file is not None:
         st.write(f"   - Volume de Dose > 30 Gy: {volume_30gy:.2f} cm³" if volume_30gy else "   - Volume de Dose > 30 Gy: não encontrado")
 
     # Impressão opcional dos volumes
-    if st.checkbox("Deseja ver todos os volumes coletados?"):
+    if st.checkbox("Deseja ver todos os dados coletados?"):
         st.subheader("📊 Resumo dos volumes e doses utilizados")
 
         def mostrar_volume(rotulo, valor):
@@ -463,3 +463,4 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, envie um arquivo .txt de DVH para iniciar a análise.")
+
