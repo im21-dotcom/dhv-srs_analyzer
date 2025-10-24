@@ -1,8 +1,9 @@
 import streamlit as st
 import tempfile
+import math
 
 # ------------------------- Funções auxiliares -------------------------
-#bloco de código para coleta de dados
+# bloco de código para coleta de dados
 
 def extrair_volume_dose_100(filepath):
     return extrair_volume_para_dose_relativa(filepath, alvo_dose=100.0)
@@ -37,6 +38,14 @@ def extrair_volume_overlap(filepath):
 def extrair_dose_max_body(filepath):
     return extrair_dado_numerico_por_estrutura(filepath, estrutura_alvo="body", chave="dose máx")
 
+# Novas funções para PTV (mín/máx)
+def extrair_dose_max_ptv(filepath):
+    return extrair_dado_numerico_por_estrutura(filepath, estrutura_alvo="ptv", chave="dose máx")
+
+def extrair_dose_min_ptv(filepath):
+    return extrair_dado_numerico_por_estrutura(filepath, estrutura_alvo="ptv", chave="dose mín")
+
+
 def extrair_dose_prescricao(filepath):
     with open(filepath, 'r', encoding='utf-8') as file:
         for linha in file:
@@ -48,8 +57,10 @@ def extrair_dose_prescricao(filepath):
                     return None
     return None
 
+
 def extrair_volume_por_estrutura(filepath, estrutura_alvo):
     return extrair_dado_numerico_por_estrutura(filepath, estrutura_alvo=estrutura_alvo, chave="volume")
+
 
 def extrair_dado_numerico_por_estrutura(filepath, estrutura_alvo, chave):
     coletando_dados = False
@@ -75,11 +86,14 @@ def extrair_dado_numerico_por_estrutura(filepath, estrutura_alvo, chave):
 
     return None
 
+
 def extrair_volume_para_dose_relativa(filepath, alvo_dose):
     return _extrair_volume_por_coluna(filepath, alvo_dose, coluna="relativa")
 
+
 def extrair_volume_para_dose_absoluta(filepath, alvo_dose_cgy):
     return _extrair_volume_por_coluna(filepath, alvo_dose_cgy, coluna="absoluta")
+
 
 def _extrair_volume_por_coluna(filepath, alvo_dose, coluna="relativa"):
     estrutura_alvo = "body"
@@ -129,57 +143,178 @@ def _extrair_volume_por_coluna(filepath, alvo_dose, coluna="relativa"):
 
     return melhor_aproximacao
 
-#bloco de código para o cálculo das métricas IC,IG,IH e Paddick
 
-def calcular_metricas_ic_ig_ih_paddick(dose_prescricao, dose_max_body, volume_ptv,
-                                       volume_iso100, volume_iso50, volume_overlap):
+# Nova função: extrair dose que cobre X% do volume do PTV
+# pct em 0-1 (ex.: 0.02 para 2%)
+def extrair_dose_cobrindo_pct_ptv(filepath, pct, volume_ptv):
+    if volume_ptv is None:
+        return None
+
+    alvo_volume = pct * volume_ptv
+    coletando_dados = False
+    dentro_da_tabela = False
+    rows = []  # tuplas (dose_cgy, volume_cm3)
+
+    with open(filepath, 'r', encoding='utf-8') as file:
+        for linha in file:
+            linha_limpa = linha.strip()
+
+            if linha_limpa.lower().startswith("estrutura:"):
+                nome_estrutura = linha_limpa.split(":", 1)[-1].strip().lower()
+                coletando_dados = (nome_estrutura == "ptv")
+                dentro_da_tabela = False
+                continue
+
+            if not coletando_dados:
+                continue
+
+            if "Dose relativa [%]" in linha and "Volume da estrutura" in linha:
+                dentro_da_tabela = True
+                continue
+
+            if not dentro_da_tabela:
+                continue
+
+            partes = linha_limpa.split()
+            if len(partes) != 3:
+                continue
+
+            try:
+                dose_cgy = float(partes[0].replace(',', '.'))
+                volumen = float(partes[2].replace(',', '.'))
+            except ValueError:
+                continue
+
+            rows.append((dose_cgy, volumen))
+
+    if not rows:
+        return None
+
+    # Procurar a maior volume <= alvo_volume (imediatamente inferior)
+    candidatos = [r for r in rows if r[1] <= alvo_volume]
+    if candidatos:
+        # escolher o que tiver maior volume (mais próximo por baixo)
+        candidato = max(candidatos, key=lambda x: x[1])
+        return candidato[0]
+
+    # Se não houver volume <= alvo (ex.: alvo muito pequeno), escolher o menor volume disponível (maior dose)
+    menor = min(rows, key=lambda x: x[1])
+    return menor[0]
+
+
+# bloco de código para o cálculo das métricas IC,IG,IH e Paddick e demais métricas pedidas
+
+def calcular_metricas_avancadas(dose_prescricao, dose_max_body, dose_max_ptv, dose_min_ptv,
+                                 volume_ptv, volume_overlap, volume_iso100, volume_iso50,
+                                 d2_ptv, d5_ptv, d95_ptv, d98_ptv):
     metricas = {}
 
-    # Índice de Conformidade (IC)
+    # Índice de Conformidade (CI1)
     if volume_ptv and volume_iso100:
-        metricas['Índice de Conformidade (IC)'] = volume_iso100 / volume_ptv
+        metricas['CI1 (isodose100/PTV)'] = volume_iso100 / volume_ptv
     else:
-        metricas['Índice de Conformidade (IC)'] = None
+        metricas['CI1 (isodose100/PTV)'] = None
 
-    # Índice de Conformidade de Paddick
-    if volume_ptv and volume_iso100 and volume_overlap:
-        try:
-            metricas['Índice de Conformidade de Paddick (Paddick)'] = (volume_overlap ** 2) / (volume_ptv * volume_iso100)
-        except ZeroDivisionError:
-            metricas['Índice de Conformidade de Paddick (Paddick)'] = None
+    # CI2 = Overlap / isodose100
+    if volume_overlap is not None and volume_iso100:
+        metricas['CI2 (Overlap/isodose100)'] = volume_overlap / volume_iso100
     else:
-        metricas['Índice de Conformidade de Paddick (Paddick)'] = None
+        metricas['CI2 (Overlap/isodose100)'] = None
 
-    # Índice de Gradiente (IG)
-    if volume_iso100 and volume_iso50:
-        metricas['Índice de Gradiente (IG)'] = volume_iso50 / volume_iso100
+    # CI3 = Overlap / PTV
+    if volume_overlap is not None and volume_ptv:
+        metricas['CI3 (Overlap/PTV)'] = volume_overlap / volume_ptv
     else:
-        metricas['Índice de Gradiente (IG)'] = None
+        metricas['CI3 (Overlap/PTV)'] = None
 
-    # Índice de Homogeneidade (IH)
-    if dose_prescricao and dose_max_body:
-        metricas['Índice de Homogeneidade (IH)'] = dose_max_body / dose_prescricao
+    # CI4 (Paddick) = CI2 * CI3
+    ci2 = metricas.get('CI2 (Overlap/isodose100)')
+    ci3 = metricas.get('CI3 (Overlap/PTV)')
+    if ci2 is not None and ci3 is not None:
+        metricas['CI4 (Paddick)'] = ci2 * ci3
     else:
-        metricas['Índice de Homogeneidade (IH)'] = None
+        metricas['CI4 (Paddick)'] = None
+
+    # Índices de Gradiente
+    if volume_iso50 and volume_iso100:
+        metricas['GI1 (isodose50/isodose100)'] = volume_iso50 / volume_iso100
+    else:
+        metricas['GI1 (isodose50/isodose100)'] = None
+
+    # Raios efetivos
+    try:
+        if volume_iso100:
+            r_iso100 = ((3 * volume_iso100) / (4 * math.pi)) ** (1.0 / 3.0)
+            metricas['Raio efetivo isodose100 (cm)'] = r_iso100
+        else:
+            metricas['Raio efetivo isodose100 (cm)'] = None
+
+        if volume_iso50:
+            r_iso50 = ((3 * volume_iso50) / (4 * math.pi)) ** (1.0 / 3.0)
+            metricas['Raio efetivo isodose50 (cm)'] = r_iso50
+        else:
+            metricas['Raio efetivo isodose50 (cm)'] = None
+
+        if metricas['Raio efetivo isodose50 (cm)'] is not None and metricas['Raio efetivo isodose100 (cm)'] is not None:
+            metricas['GI2 (raio50/raio100)'] = metricas['Raio efetivo isodose50 (cm)'] / metricas['Raio efetivo isodose100 (cm)']
+        else:
+            metricas['GI2 (raio50/raio100)'] = None
+    except Exception:
+        metricas['Raio efetivo isodose100 (cm)'] = None
+        metricas['Raio efetivo isodose50 (cm)'] = None
+        metricas['GI2 (raio50/raio100)'] = None
+
+    # GI3 = volume isodose50 / volume PTV
+    if volume_iso50 and volume_ptv:
+        metricas['GI3 (isodose50/PTV)'] = volume_iso50 / volume_ptv
+    else:
+        metricas['GI3 (isodose50/PTV)'] = None
+
+    # Índices de Homogeneidade
+    if dose_max_ptv is not None and dose_min_ptv is not None and dose_min_ptv != 0:
+        metricas['HI1 (Dmax_PTV/Dmin_PTV)'] = dose_max_ptv / dose_min_ptv
+    else:
+        metricas['HI1 (Dmax_PTV/Dmin_PTV)'] = None
+
+    if dose_max_ptv is not None and dose_prescricao is not None and dose_prescricao != 0:
+        metricas['HI2 (Dmax_PTV/D_prescricao)'] = dose_max_ptv / dose_prescricao
+    else:
+        metricas['HI2 (Dmax_PTV/D_prescricao)'] = None
+
+    # HI3 = (D2 - D98) / D_prescricao
+    if d2_ptv is not None and d98_ptv is not None and dose_prescricao is not None and dose_prescricao != 0:
+        metricas['HI3 ((D2-D98)/D_prescricao)'] = (d2_ptv - d98_ptv) / dose_prescricao
+    else:
+        metricas['HI3 ((D2-D98)/D_prescricao)'] = None
+
+    # HI4 = (D5 - D95) / D_prescricao
+    if d5_ptv is not None and d95_ptv is not None and dose_prescricao is not None and dose_prescricao != 0:
+        metricas['HI4 ((D5-D95)/D_prescricao)'] = (d5_ptv - d95_ptv) / dose_prescricao
+    else:
+        metricas['HI4 ((D5-D95)/D_prescricao)'] = None
 
     return metricas
+
 
 def imprimir_metricas(metricas):
     print("\n📈 Métricas Calculadas:")
     for nome, valor in metricas.items():
         if valor is not None:
-            print(f"🔹 {nome}: {valor:.4f}")
+            if isinstance(valor, float):
+                print(f"🔹 {nome}: {valor:.4f}")
+            else:
+                print(f"🔹 {nome}: {valor}")
         else:
             print(f"🔹 {nome}: não calculado (dados insuficientes)")
 
-#bloco de código para coleta de métricas de volumes de dose associadas ao desenvolvimento de radionecrose
+# bloco de código para coleta de métricas de volumes de dose associadas ao desenvolvimento de radionecrose
 
-def imprimir_metricas_por_fracao(n_frações, volume_10gy=None, volume_12gy=None,
+def imprimir_metricas_por_fracao(n_fracoes, volume_10gy=None, volume_12gy=None,
                                   volume_18gy=None, volume_20gy=None,
                                   volume_25gy=None, volume_30gy=None):
     print("\n📦 Volumes de Dose associados ao desenvolvimento de radionecrose:")
 
-    if n_frações == 1:
+    if n_fracoes == 1:
         print("🔹 Fracionamento: 1 seção de tratamento")
         if volume_10gy is not None:
             print(f"   - Volume de Dose > 10 Gy: {volume_10gy:.2f} cm³")
@@ -190,7 +325,7 @@ def imprimir_metricas_por_fracao(n_frações, volume_10gy=None, volume_12gy=None
         else:
             print("   - Volume de Dose > 12 Gy: não encontrado")
 
-    elif n_frações == 3:
+    elif n_fracoes == 3:
         print("🔹 Fracionamento: 3 seções de tratamento")
         if volume_18gy is not None:
             print(f"   - Volume de Dose > 18 Gy: {volume_18gy:.2f} cm³")
@@ -201,7 +336,7 @@ def imprimir_metricas_por_fracao(n_frações, volume_10gy=None, volume_12gy=None
         else:
             print("   - Volume de Dose > 20 Gy: não encontrado")
 
-    elif n_frações == 5:
+    elif n_fracoes == 5:
         print("🔹 Fracionamento: 5 seções de tratamento")
         if volume_25gy is not None:
             print(f"   - Volume de Dose > 25 Gy: {volume_25gy:.2f} cm³")
@@ -215,10 +350,8 @@ def imprimir_metricas_por_fracao(n_frações, volume_10gy=None, volume_12gy=None
     else:
         print("❗ Número de frações inválido. Use 1, 3 ou 5.")
 
-# Supondo que todas as funções estão coladas corretamente aqui...
-
 # ------------------------- Interface Streamlit -------------------------
-st.title("Análise de DVH - Radioterapia")
+st.title("Análise de DVH - Radioterapia (versão estendida)")
 
 st.sidebar.header("Upload do Arquivo")
 uploaded_file = st.sidebar.file_uploader("Envie o arquivo .txt do DVH", type="txt")
@@ -235,6 +368,8 @@ if uploaded_file is not None:
     # Coletas
     dose_prescricao = extrair_dose_prescricao(caminho)
     dose_max_body = extrair_dose_max_body(caminho)
+    dose_max_ptv = extrair_dose_max_ptv(caminho)
+    dose_min_ptv = extrair_dose_min_ptv(caminho)
     volume_ptv = extrair_volume_ptv(caminho)
     volume_overlap = extrair_volume_overlap(caminho)
     volume_iso100 = extrair_volume_dose_100(caminho)
@@ -246,17 +381,31 @@ if uploaded_file is not None:
     volume_25gy = extrair_volume_dose_25gy(caminho)
     volume_30gy = extrair_volume_dose_30gy(caminho)
 
-    # Métricas principais
-    metricas = calcular_metricas_ic_ig_ih_paddick(
-        dose_prescricao, dose_max_body, volume_ptv,
-        volume_iso100, volume_iso50, volume_overlap
+    # Doses que cobrem X% do PTV (em cGy)
+    d2_ptv = extrair_dose_cobrindo_pct_ptv(caminho, 0.02, volume_ptv)
+    d5_ptv = extrair_dose_cobrindo_pct_ptv(caminho, 0.05, volume_ptv)
+    d95_ptv = extrair_dose_cobrindo_pct_ptv(caminho, 0.95, volume_ptv)
+    d98_ptv = extrair_dose_cobrindo_pct_ptv(caminho, 0.98, volume_ptv)
+
+    # Métricas principais (estendidas)
+    metricas = calcular_metricas_avancadas(
+        dose_prescricao, dose_max_body, dose_max_ptv, dose_min_ptv,
+        volume_ptv, volume_overlap, volume_iso100, volume_iso50,
+        d2_ptv, d5_ptv, d95_ptv, d98_ptv
     )
 
     # Impressão das métricas
-    st.subheader("📈 Métricas Calculadas")
+    st.subheader("📈 Métricas Calculadas (estendidas)")
     for nome, valor in metricas.items():
         if valor is not None:
-            st.write(f"🔹 {nome}: {valor:.4f}")
+            # Formatação especial para raios
+            if 'Raio efetivo' in nome:
+                st.write(f"🔹 {nome}: {valor:.3f} cm")
+            else:
+                try:
+                    st.write(f"🔹 {nome}: {valor:.4f}")
+                except Exception:
+                    st.write(f"🔹 {nome}: {valor}")
         else:
             st.write(f"🔹 {nome}: não calculado (dados insuficientes)")
 
@@ -279,7 +428,7 @@ if uploaded_file is not None:
 
     # Impressão opcional dos volumes
     if st.checkbox("Deseja ver todos os volumes coletados?"):
-        st.subheader("📊 Resumo dos volumes utilizados")
+        st.subheader("📊 Resumo dos volumes e doses utilizados")
 
         def mostrar_volume(rotulo, valor):
             if valor is not None:
@@ -294,7 +443,13 @@ if uploaded_file is not None:
                 st.write(f"🔹 {rotulo}: não encontrado")
 
         mostrar_valor("Dose de prescrição", dose_prescricao)
-        mostrar_valor("Dose máxima na estrutura Body", dose_max_body)
+        mostrar_valor("Dose máxima na estrutura Body (cGy)", dose_max_body)
+        mostrar_valor("Dose máxima no PTV (cGy)", dose_max_ptv)
+        mostrar_valor("Dose mínima no PTV (cGy)", dose_min_ptv)
+        mostrar_valor("Dose que cobre 2% do PTV (cGy)", d2_ptv)
+        mostrar_valor("Dose que cobre 5% do PTV (cGy)", d5_ptv)
+        mostrar_valor("Dose que cobre 95% do PTV (cGy)", d95_ptv)
+        mostrar_valor("Dose que cobre 98% do PTV (cGy)", d98_ptv)
         mostrar_volume("Volume do PTV", volume_ptv)
         mostrar_volume("Volume do Overlap (PTV ∩ 100%)", volume_overlap)
         mostrar_volume("Volume da isodose de 100%", volume_iso100)
