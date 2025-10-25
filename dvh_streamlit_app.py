@@ -540,6 +540,8 @@ if uploaded_file is not None:
         mostrar_valor("Dose máxima na estrutura Body (cGy)", dose_max_body)
         mostrar_valor("Dose máxima no PTV (cGy)", dose_max_ptv)
         mostrar_valor("Dose mínima no PTV (cGy)", dose_min_ptv)
+        mostrar_valor("Dose média no PTV (cGy)", dose_media_ptv)
+        mostrar_valor("Desvio-padrão no PTV (cGy)", dose_std_ptv)
         mostrar_valor("Dose que cobre 2% do PTV (cGy)", d2_ptv)
         mostrar_valor("Dose que cobre 5% do PTV (cGy)", d5_ptv)
         mostrar_valor("Dose que cobre 95% do PTV (cGy)", d95_ptv)
@@ -557,3 +559,4 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, envie um arquivo .txt de DVH para iniciar a análise.")
+
