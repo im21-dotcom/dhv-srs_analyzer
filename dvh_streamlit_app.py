@@ -388,20 +388,54 @@ if uploaded_file is not None:
         d2_ptv, d5_ptv, d95_ptv, d98_ptv
     )
 
-    # Impressão das métricas
+    # Impressão das métricas organizadas por blocos com valores ideais
     st.subheader("📈 Métricas Calculadas")
-    for nome, valor in metricas.items():
-        if valor is not None:
-            # Formatação especial para raios
-            if 'Raio efetivo' in nome:
-                st.write(f"🔹 {nome}: {valor:.3f} cm")
+    
+    # Dicionário de valores ideais
+    valores_ideais = {
+        'CI1 (isodose100/PTV)': 1,
+        'CI2 (Overlap/isodose100)': 1,
+        'CI3 (Overlap/PTV)': 1,
+        'CI4 (Paddick)': 1,
+        'HI1 (Dmax_PTV/Dmin_PTV)': 1,
+        'HI2 (Dmax_PTV/D_prescricao)': 1,
+        'HI3 ((D2-D98)/D_prescricao)': 0,
+        'HI4 ((D5-D95)/D_prescricao)': 0
+    }
+    
+    # Blocos de índices
+    blocos = {
+        "🔹 Índices de Conformidade": [
+            'CI1 (isodose100/PTV)',
+            'CI2 (Overlap/isodose100)',
+            'CI3 (Overlap/PTV)',
+            'CI4 (Paddick)'
+        ],
+        "🔹 Índices de Homogeneidade": [
+            'HI1 (Dmax_PTV/Dmin_PTV)',
+            'HI2 (Dmax_PTV/D_prescricao)',
+            'HI3 ((D2-D98)/D_prescricao)',
+            'HI4 ((D5-D95)/D_prescricao)'
+        ],
+        "🔹 Índices de Gradiente": [
+            'GI1 (isodose50/isodose100)',
+            'GI2 (raio50/raio100)',
+            'GI3 (isodose50/PTV)'
+        ]
+    }
+    
+    # Impressão formatada
+    for bloco_nome, lista_metricas in blocos.items():
+        st.markdown(f"### {bloco_nome}")
+        for nome in lista_metricas:
+            valor = metricas.get(nome)
+            if valor is not None:
+                if nome in valores_ideais:
+                    st.write(f"• {nome}: {valor:.4f}; valor ideal = {valores_ideais[nome]}.")
+                else:
+                    st.write(f"• {nome}: {valor:.4f}")
             else:
-                try:
-                    st.write(f"🔹 {nome}: {valor:.4f}")
-                except Exception:
-                    st.write(f"🔹 {nome}: {valor}")
-        else:
-            st.write(f"🔹 {nome}: não calculado (dados insuficientes)")
+                st.write(f"• {nome}: não calculado (dados insuficientes)")
 
     # Impressão por fração
     st.subheader("📦 Volumes de Dose associados ao desenvolvimento de radionecrose")
@@ -457,6 +491,7 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, envie um arquivo .txt de DVH para iniciar a análise.")
+
 
 
 
