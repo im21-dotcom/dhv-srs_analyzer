@@ -593,6 +593,4 @@ if uploaded_file is not None:
         mostrar_volume("Volume da dose de 30 Gy", volume_30gy)
 
 else:
-    st.info("Por favor, envie um arquivo .txt de DVH para iniciar a análise.")
-
-
+    st.info("Por favor, envie um arquivo .txt de DVH tabulado para iniciar a análise. O arquivo precisa ser um gráfico cumulativo, com dose absoluta e volume absoluto, contendo as estruturas: Body, PTV, Overlap e Dose 50[%]")
