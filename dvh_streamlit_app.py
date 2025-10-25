@@ -202,11 +202,50 @@ def extrair_dose_cobrindo_pct_ptv(filepath, pct, volume_ptv):
     return menor[0]
 
 
+def extrair_dose_media_ptv(filepath):
+    """Extrai a dose média [cGy] da estrutura PTV."""
+    coletando_dados = False
+    with open(filepath, 'r', encoding='utf-8') as file:
+        for linha in file:
+            linha_limpa = linha.strip().lower()
+            if linha_limpa.startswith("estrutura:"):
+                nome = linha_limpa.split(":", 1)[-1].strip()
+                coletando_dados = (nome.lower() == "ptv")
+                continue
+            if coletando_dados and linha_limpa.startswith("dose média [cgy]:"):
+                try:
+                    valor = linha.split(":", 1)[-1].strip().replace(",", ".")
+                    return float(valor)
+                except ValueError:
+                    return None
+    return None
+
+
+def extrair_std_ptv(filepath):
+    """Extrai o desvio-padrão [cGy] (STD) da estrutura PTV."""
+    coletando_dados = False
+    with open(filepath, 'r', encoding='utf-8') as file:
+        for linha in file:
+            linha_limpa = linha.strip().lower()
+            if linha_limpa.startswith("estrutura:"):
+                nome = linha_limpa.split(":", 1)[-1].strip()
+                coletando_dados = (nome.lower() == "ptv")
+                continue
+            if coletando_dados and linha_limpa.startswith("std [cgy]:"):
+                try:
+                    valor = linha.split(":", 1)[-1].strip().replace(",", ".")
+                    return float(valor)
+                except ValueError:
+                    return None
+    return None
+
+
 # bloco de código para o cálculo das métricas IC,IG,IH e Paddick e demais métricas pedidas
 
 def calcular_metricas_avancadas(dose_prescricao, dose_max_body, dose_max_ptv, dose_min_ptv,
                                  volume_ptv, volume_overlap, volume_iso100, volume_iso50,
-                                 d2_ptv, d5_ptv, d95_ptv, d98_ptv):
+                                 d2_ptv, d5_ptv, d95_ptv, d98_ptv,
+                                 dose_media_ptv=None, dose_std_ptv=None):
     metricas = {}
 
     # Índice de Conformidade (CI1)
@@ -286,6 +325,18 @@ def calcular_metricas_avancadas(dose_prescricao, dose_max_body, dose_max_ptv, do
     else:
         metricas['HI4 ((D5-D95)/D_prescricao)'] = None
 
+    # HI5 (S-index) = (STD_PTV / Dose_prescricao) * 100
+    # e Dose média PTV (%) = (Dose_média_PTV / Dose_prescricao) * 100
+    if dose_std_ptv is not None and dose_prescricao:
+        metricas['HI5 (S-índex)'] = (dose_std_ptv / dose_prescricao) * 100
+    else:
+        metricas['HI5 (S-índex)'] = None
+    
+    if dose_media_ptv is not None and dose_prescricao:
+        metricas['Dose média PTV (%)'] = (dose_media_ptv / dose_prescricao) * 100
+    else:
+        metricas['Dose média PTV (%)'] = None
+
     return metricas
 
 
@@ -364,6 +415,8 @@ if uploaded_file is not None:
     dose_max_body = extrair_dose_max_body(caminho)
     dose_max_ptv = extrair_dose_max_ptv(caminho)
     dose_min_ptv = extrair_dose_min_ptv(caminho)
+    dose_media_ptv = extrair_dose_media_ptv(caminho)
+    dose_std_ptv = extrair_std_ptv(caminho)
     volume_ptv = extrair_volume_ptv(caminho)
     volume_overlap = extrair_volume_overlap(caminho)
     volume_iso100 = extrair_volume_dose_100(caminho)
@@ -385,7 +438,8 @@ if uploaded_file is not None:
     metricas = calcular_metricas_avancadas(
         dose_prescricao, dose_max_body, dose_max_ptv, dose_min_ptv,
         volume_ptv, volume_overlap, volume_iso100, volume_iso50,
-        d2_ptv, d5_ptv, d95_ptv, d98_ptv
+        d2_ptv, d5_ptv, d95_ptv, d98_ptv,
+        dose_media_ptv, dose_std_ptv
     )
 
     # Impressão das métricas organizadas por blocos com valores ideais
@@ -415,7 +469,8 @@ if uploaded_file is not None:
             'HI1 (Dmax_PTV/Dmin_PTV)',
             'HI2 (Dmax_PTV/D_prescricao)',
             'HI3 ((D2-D98)/D_prescricao)',
-            'HI4 ((D5-D95)/D_prescricao)'
+            'HI4 ((D5-D95)/D_prescricao)',
+            'HI5 (S-índex)'
         ],
         "🔹 Índices de Gradiente": [
             'GI1 (isodose50/isodose100)',
@@ -430,6 +485,17 @@ if uploaded_file is not None:
         for nome in lista_metricas:
             valor = metricas.get(nome)
             if valor is not None:
+
+                # Caso especial para HI5 (S-índex)
+                if nome == 'HI5 (S-índex)':
+                    dose_media_norm = metricas.get('Dose média PTV (%)')
+                    if dose_media_norm is not None:
+                        st.write(f"• {nome}: {valor:.3f}%, associado a uma dose média de {dose_media_norm:.2f}%.")
+                    else:
+                        st.write(f"• {nome}: {valor:.3f}%")
+                    continue  # evita duplicação, pula o resto do bloco
+
+                # Casos normais
                 if nome in valores_ideais:
                     st.write(f"• {nome}: {valor:.4f}; valor ideal = {valores_ideais[nome]}.")
                 else:
@@ -491,8 +557,3 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, envie um arquivo .txt de DVH para iniciar a análise.")
-
-
-
-
-
