@@ -239,13 +239,30 @@ def extrair_std_ptv(filepath):
                     return None
     return None
 
+def extrair_dose_media_iso50(filepath):
+    """Extrai a dose média [cGy] da estrutura Dose 50[%]."""
+    coletando_dados = False
+    with open(filepath, 'r', encoding='utf-8') as file:
+        for linha in file:
+            linha_limpa = linha.strip().lower()
+            if linha_limpa.startswith("estrutura:"):
+                nome = linha_limpa.split(":", 1)[-1].strip()
+                coletando_dados = (nome.lower() == "dose 50[%]")
+                continue
+            if coletando_dados and linha_limpa.startswith("dose média [cgy]:"):
+                try:
+                    valor = linha.split(":", 1)[-1].strip().replace(",", ".")
+                    return float(valor)
+                except ValueError:
+                    return None
+    return None
 
 # bloco de código para o cálculo das métricas IC,IG,IH e Paddick e demais métricas pedidas
 
 def calcular_metricas_avancadas(dose_prescricao, dose_max_body, dose_max_ptv, dose_min_ptv,
                                  volume_ptv, volume_overlap, volume_iso100, volume_iso50,
                                  d2_ptv, d5_ptv, d95_ptv, d98_ptv,
-                                 dose_media_ptv=None, dose_std_ptv=None):
+                                 dose_media_ptv=None, dose_std_ptv=None, dose_media_iso50=None):
     metricas = {}
 
     # Índice de Conformidade (CI1)
@@ -337,6 +354,18 @@ def calcular_metricas_avancadas(dose_prescricao, dose_max_body, dose_max_ptv, do
     else:
         metricas['Dose média PTV (%)'] = None
 
+    # Índice de Eficiência Global (Gn)
+    if (
+        dose_media_ptv is not None and volume_ptv is not None
+        and dose_media_iso50 is not None and volume_iso50 is not None
+        and dose_media_iso50 != 0 and volume_iso50 != 0
+    ):
+        metricas['Gn (Dose integral[PTV]/Dose integral[V50%])'] = (
+            (dose_media_ptv * volume_ptv) / (dose_media_iso50 * volume_iso50)
+        )
+    else:
+        metricas['Gn (Dose integral[PTV]/Dose integral[V50%])'] = None
+    
     return metricas
 
 
@@ -417,6 +446,7 @@ if uploaded_file is not None:
     dose_min_ptv = extrair_dose_min_ptv(caminho)
     dose_media_ptv = extrair_dose_media_ptv(caminho)
     dose_std_ptv = extrair_std_ptv(caminho)
+    dose_media_iso50 = extrair_dose_media_iso50(caminho)
     volume_ptv = extrair_volume_ptv(caminho)
     volume_overlap = extrair_volume_overlap(caminho)
     volume_iso100 = extrair_volume_dose_100(caminho)
@@ -439,7 +469,7 @@ if uploaded_file is not None:
         dose_prescricao, dose_max_body, dose_max_ptv, dose_min_ptv,
         volume_ptv, volume_overlap, volume_iso100, volume_iso50,
         d2_ptv, d5_ptv, d95_ptv, d98_ptv,
-        dose_media_ptv, dose_std_ptv
+        dose_media_ptv, dose_std_ptv, dose_media_iso50
     )
 
     # Impressão das métricas organizadas por blocos com valores ideais
@@ -454,7 +484,8 @@ if uploaded_file is not None:
         'HI1 (Dmax_PTV/Dmin_PTV)': 1,
         'HI2 (Dmax_PTV/D_prescricao)': 1,
         'HI3 ((D2-D98)/D_prescricao)': 0,
-        'HI4 ((D5-D95)/D_prescricao)': 0
+        'HI4 ((D5-D95)/D_prescricao)': 0,
+        'Gn (Dose integral[PTV]/Dose integral[V50%])': 1,
     }
     
     # Blocos de índices
@@ -476,6 +507,9 @@ if uploaded_file is not None:
             'GI1 (isodose50/isodose100)',
             'GI2 (raio50/raio100)',
             'GI3 (isodose50/PTV)'
+        ],
+        "🔹 Índice de Eficiência Global": [
+            'Gn (Dose integral[PTV]/Dose integral[V50%])'
         ]
     }
     
@@ -546,6 +580,7 @@ if uploaded_file is not None:
         mostrar_valor("Dose que cobre 5% do PTV (cGy)", d5_ptv)
         mostrar_valor("Dose que cobre 95% do PTV (cGy)", d95_ptv)
         mostrar_valor("Dose que cobre 98% do PTV (cGy)", d98_ptv)
+        mostrar_valor("Dose média na estrutura Dose 50[%] (cGy)", dose_media_iso50)
         mostrar_volume("Volume do PTV", volume_ptv)
         mostrar_volume("Volume do Overlap (PTV ∩ 100%)", volume_overlap)
         mostrar_volume("Volume da isodose de 100%", volume_iso100)
@@ -559,4 +594,5 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, envie um arquivo .txt de DVH para iniciar a análise.")
+
 
