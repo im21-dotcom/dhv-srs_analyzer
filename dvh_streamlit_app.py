@@ -602,7 +602,8 @@ if uploaded_file is not None:
         mostrar_volume("Volume da dose de 30 Gy", volume_30gy)
 
 else:
-    st.info("Por favor, envie um arquivo .txt de DVH tabulado para iniciar a análise. O arquivo precisa ser um gráfico cumulativo, com dose absoluta e volume absoluto, contendo as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%.")
+    st.info("Por favor, envie um arquivo .txt de DVH tabulado na barra lateral para iniciar a análise. O arquivo precisa ser um gráfico cumulativo, com dose absoluta e volume absoluto, contendo as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%.")
+
 
 
 
