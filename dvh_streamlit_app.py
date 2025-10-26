@@ -427,8 +427,14 @@ def imprimir_metricas_por_fracao(n_fracoes, volume_10gy=None, volume_12gy=None,
 # ------------------------- Interface Streamlit -------------------------
 st.title("Análise de DVH - Radioterapia")
 
-st.write("### Nome das estruturas no DVH")
+# Tipo de tratamento
+st.sidebar.header("Configuração do Caso")
+tipo_tratamento = st.sidebar.selectbox(
+    "Selecione o tipo de tratamento:",
+    ["SRS (Radiocirurgia)", "SBRT de Pulmão", "SBRT de Próstata"]
+)
 
+st.write("### Nome das estruturas no DVH")
 nome_ptv = st.text_input("Qual o nome da sua estrutura de PTV no DVH:", "PTV")
 nome_body = st.text_input("Qual o nome da sua estrutura de Corpo no DVH:", "Body")
 nome_overlap = st.text_input("Qual o nome da sua estrutura de Interseção do PTV com a Isodose de Prescrição no DVH:", "Overlap")
@@ -444,9 +450,12 @@ if uploaded_file is not None:
         caminho = tmp.name
 
     st.success("✅ Arquivo carregado com sucesso!")
-    
-    # Selecionar número de frações
-    n_frações = st.sidebar.selectbox("Selecione o número de frações:", [1, 3, 5])
+
+    # Mostrar seletor de frações apenas se for SRS
+    if tipo_tratamento == "SRS (Radiocirurgia)":
+        n_frações = st.sidebar.selectbox("Selecione o número de frações:", [1, 3, 5])
+    else:
+        n_frações = None  # para SBRT não usamos isso
 
     # Coletas
     dose_prescricao = extrair_dose_prescricao(caminho)
@@ -546,22 +555,24 @@ if uploaded_file is not None:
             else:
                 st.write(f"• {nome}: não calculado (dados insuficientes)")
 
-    # Impressão por fração
-    st.subheader("📦 Volumes de Dose associados ao desenvolvimento de radionecrose")
-    if n_frações == 1:
-        st.write("🔹 Fracionamento: 1 seção de tratamento")
-        st.write(f"   - Volume de Dose > 10 Gy: {volume_10gy:.2f} cm³" if volume_10gy else "   - Volume de Dose > 10 Gy: não encontrado")
-        st.write(f"   - Volume de Dose > 12 Gy: {volume_12gy:.2f} cm³" if volume_12gy else "   - Volume de Dose > 12 Gy: não encontrado")
-
-    elif n_frações == 3:
-        st.write("🔹 Fracionamento: 3 seções de tratamento")
-        st.write(f"   - Volume de Dose > 18 Gy: {volume_18gy:.2f} cm³" if volume_18gy else "   - Volume de Dose > 18 Gy: não encontrado")
-        st.write(f"   - Volume de Dose > 20 Gy: {volume_20gy:.2f} cm³" if volume_20gy else "   - Volume de Dose > 20 Gy: não encontrado")
-
-    elif n_frações == 5:
-        st.write("🔹 Fracionamento: 5 seções de tratamento")
-        st.write(f"   - Volume de Dose > 25 Gy: {volume_25gy:.2f} cm³" if volume_25gy else "   - Volume de Dose > 25 Gy: não encontrado")
-        st.write(f"   - Volume de Dose > 30 Gy: {volume_30gy:.2f} cm³" if volume_30gy else "   - Volume de Dose > 30 Gy: não encontrado")
+    # Impressão por fração — apenas para SRS
+    if tipo_tratamento == "SRS (Radiocirurgia)":   
+        st.subheader("📦 Volumes de Dose associados ao desenvolvimento de radionecrose")
+        
+        if n_frações == 1:
+            st.write("🔹 Fracionamento: 1 seção de tratamento")
+            st.write(f"   - Volume de Dose > 10 Gy: {volume_10gy:.2f} cm³" if volume_10gy else "   - Volume de Dose > 10 Gy: não encontrado")
+            st.write(f"   - Volume de Dose > 12 Gy: {volume_12gy:.2f} cm³" if volume_12gy else "   - Volume de Dose > 12 Gy: não encontrado")
+    
+        elif n_frações == 3:
+            st.write("🔹 Fracionamento: 3 seções de tratamento")
+            st.write(f"   - Volume de Dose > 18 Gy: {volume_18gy:.2f} cm³" if volume_18gy else "   - Volume de Dose > 18 Gy: não encontrado")
+            st.write(f"   - Volume de Dose > 20 Gy: {volume_20gy:.2f} cm³" if volume_20gy else "   - Volume de Dose > 20 Gy: não encontrado")
+    
+        elif n_frações == 5:
+            st.write("🔹 Fracionamento: 5 seções de tratamento")
+            st.write(f"   - Volume de Dose > 25 Gy: {volume_25gy:.2f} cm³" if volume_25gy else "   - Volume de Dose > 25 Gy: não encontrado")
+            st.write(f"   - Volume de Dose > 30 Gy: {volume_30gy:.2f} cm³" if volume_30gy else "   - Volume de Dose > 30 Gy: não encontrado")
 
     # Impressão opcional dos volumes
     if st.checkbox("Deseja ver todos os dados coletados?"):
@@ -603,6 +614,7 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, envie um arquivo .txt de DVH tabulado na barra lateral para iniciar a análise. O arquivo precisa ser um gráfico cumulativo, com dose absoluta e volume absoluto, contendo as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%.")
+
 
 
 
