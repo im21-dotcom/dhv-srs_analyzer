@@ -30,20 +30,20 @@ def extrair_volume_dose_30gy(filepath):
     return extrair_volume_para_dose_absoluta(filepath, alvo_dose_cgy=3000.0)
 
 def extrair_volume_ptv(filepath):
-    return extrair_volume_por_estrutura(filepath, estrutura_alvo=nome_ptv.lower())
+    return extrair_volume_por_estrutura(filepath, estrutura_alvo=nome_ptv.strip().lower())
 
 def extrair_volume_overlap(filepath):
-    return extrair_volume_por_estrutura(filepath, estrutura_alvo=nome_overlap.lower())
+    return extrair_volume_por_estrutura(filepath, estrutura_alvo=nome_overlap.strip().lower())
 
 def extrair_dose_max_body(filepath):
-    return extrair_dado_numerico_por_estrutura(filepath, estrutura_alvo=nome_body.lower(), chave="dose máx")
+    return extrair_dado_numerico_por_estrutura(filepath, estrutura_alvo=nome_body.strip().lower(), chave="dose máx")
 
 # Novas funções para PTV (mín/máx)
 def extrair_dose_max_ptv(filepath):
-    return extrair_dado_numerico_por_estrutura(filepath, estrutura_alvo=nome_ptv.lower(), chave="dose máx")
+    return extrair_dado_numerico_por_estrutura(filepath, estrutura_alvo=nome_ptv.strip().lower(), chave="dose máx")
 
 def extrair_dose_min_ptv(filepath):
-    return extrair_dado_numerico_por_estrutura(filepath, estrutura_alvo=nome_ptv.lower(), chave="dose mín")
+    return extrair_dado_numerico_por_estrutura(filepath, estrutura_alvo=nome_ptv.strip().lower(), chave="dose mín")
 
 
 def extrair_dose_prescricao(filepath):
@@ -71,7 +71,7 @@ def extrair_dado_numerico_por_estrutura(filepath, estrutura_alvo, chave):
 
             if linha_limpa.startswith("estrutura:"):
                 nome_estrutura = linha_limpa.split(":", 1)[-1].strip().lower()
-                coletando_dados = (nome_estrutura == estrutura_alvo.lower())
+                coletando_dados = (nome_estrutura == estrutura_alvo.strip().lower())
                 continue
 
             if not coletando_dados:
@@ -161,7 +161,7 @@ def extrair_dose_cobrindo_pct_ptv(filepath, pct, volume_ptv):
 
             if linha_limpa.lower().startswith("estrutura:"):
                 nome_estrutura = linha_limpa.split(":", 1)[-1].strip().lower()
-                coletando_dados = (nome_estrutura == nome_ptv.lower())
+                coletando_dados = (nome_estrutura == nome_ptv.strip().lower())
                 dentro_da_tabela = False
                 continue
 
@@ -210,7 +210,7 @@ def extrair_dose_media_ptv(filepath):
             linha_limpa = linha.strip().lower()
             if linha_limpa.startswith("estrutura:"):
                 nome = linha_limpa.split(":", 1)[-1].strip()
-                coletando_dados = (nome.lower() == nome_ptv.lower())
+                coletando_dados = (nome.lower() == nome_ptv.strip().lower())
                 continue
             if coletando_dados and linha_limpa.startswith("dose média [cgy]:"):
                 try:
@@ -229,7 +229,7 @@ def extrair_std_ptv(filepath):
             linha_limpa = linha.strip().lower()
             if linha_limpa.startswith("estrutura:"):
                 nome = linha_limpa.split(":", 1)[-1].strip()
-                coletando_dados = (nome.lower() == nome_ptv.lower())
+                coletando_dados = (nome.lower() == nome_ptv.strip().lower())
                 continue
             if coletando_dados and linha_limpa.startswith("std [cgy]:"):
                 try:
@@ -247,7 +247,7 @@ def extrair_dose_media_iso50(filepath):
             linha_limpa = linha.strip().lower()
             if linha_limpa.startswith("estrutura:"):
                 nome = linha_limpa.split(":", 1)[-1].strip()
-                coletando_dados = (nome.lower() == nome_iso50.lower())
+                coletando_dados = (nome.lower() == nome_iso50.strip().lower())
                 continue
             if coletando_dados and linha_limpa.startswith("dose média [cgy]:"):
                 try:
@@ -603,6 +603,7 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, envie um arquivo .txt de DVH tabulado para iniciar a análise. O arquivo precisa ser um gráfico cumulativo, com dose absoluta e volume absoluto, contendo as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%.")
+
 
 
 
