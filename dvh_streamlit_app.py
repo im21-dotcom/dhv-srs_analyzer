@@ -591,7 +591,7 @@ if uploaded_file is not None:
         mostrar_valor("Dose que cobre 98% do PTV (cGy)", d98_ptv)
         mostrar_valor("Dose média na estrutura Dose 50[%] (cGy)", dose_media_iso50)
         mostrar_volume("Volume do PTV", volume_ptv)
-        mostrar_volume("Volume do Overlap (PTV ∩ 100%)", volume_overlap)
+        mostrar_volume("Volume da interseção (PTV ∩ 100%)", volume_overlap)
         mostrar_volume("Volume da isodose de 100%", volume_iso100)
         mostrar_volume("Volume da isodose de 50%", volume_iso50)
         mostrar_volume("Volume da dose de 10 Gy", volume_10gy)
@@ -603,6 +603,7 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, envie um arquivo .txt de DVH tabulado para iniciar a análise. O arquivo precisa ser um gráfico cumulativo, com dose absoluta e volume absoluto, contendo as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%.")
+
 
 
 
