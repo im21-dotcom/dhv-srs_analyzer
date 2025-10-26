@@ -450,14 +450,14 @@ if uploaded_file is not None:
 
     # Coletas
     dose_prescricao = extrair_dose_prescricao(caminho)
-    dose_max_body = extrair_dose_max_body(caminho, nome_body, "dose máx")
-    dose_max_ptv = extrair_dose_max_ptv(caminho, nome_ptv, "dose máx")
-    dose_min_ptv = extrair_dose_min_ptv(caminho, nome_ptv, "dose mín")
-    dose_media_ptv = extrair_dose_media_ptv(caminho, nome_ptv, "dose média")
-    dose_std_ptv = extrair_std_ptv(caminho, nome_ptv, "STD")
-    dose_media_iso50 = extrair_dose_media_iso50(caminho, nome_iso50)
-    volume_ptv = extrair_volume_ptv(caminho, nome_ptv)
-    volume_overlap = extrair_volume_overlap(caminho, nome_overlap)
+    dose_max_body = extrair_dose_max_body(caminho)
+    dose_max_ptv = extrair_dose_max_ptv(caminho)
+    dose_min_ptv = extrair_dose_min_ptv(caminho)
+    dose_media_ptv = extrair_dose_media_ptv(caminho)
+    dose_std_ptv = extrair_std_ptv(caminho)
+    dose_media_iso50 = extrair_dose_media_iso50(caminho)
+    volume_ptv = extrair_volume_ptv(caminho)
+    volume_overlap = extrair_volume_overlap(caminho)
     volume_iso100 = extrair_volume_dose_100(caminho)
     volume_iso50 = extrair_volume_dose_50(caminho)
     volume_10gy = extrair_volume_dose_10gy(caminho)
@@ -603,5 +603,6 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, envie um arquivo .txt de DVH tabulado para iniciar a análise. O arquivo precisa ser um gráfico cumulativo, com dose absoluta e volume absoluto, contendo as estruturas: Body, PTV, Overlap e Dose 50[%].")
+
 
 
