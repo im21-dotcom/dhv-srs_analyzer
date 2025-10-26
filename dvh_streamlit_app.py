@@ -161,7 +161,7 @@ def extrair_dose_cobrindo_pct_ptv(filepath, pct, volume_ptv):
 
             if linha_limpa.lower().startswith("estrutura:"):
                 nome_estrutura = linha_limpa.split(":", 1)[-1].strip().lower()
-                coletando_dados = (nome_estrutura == "ptv")
+                coletando_dados = (nome_estrutura == nome_ptv.lower())
                 dentro_da_tabela = False
                 continue
 
@@ -603,6 +603,7 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, envie um arquivo .txt de DVH tabulado para iniciar a análise. O arquivo precisa ser um gráfico cumulativo, com dose absoluta e volume absoluto, contendo as estruturas: Body, PTV, Overlap e Dose 50[%].")
+
 
 
 
