@@ -592,26 +592,28 @@ if uploaded_file is not None:
     # Impressão formatada
     for bloco_nome, lista_metricas in blocos.items():
         st.markdown(f"### {bloco_nome}")
+        bloco_incompleto = False
+    
         for nome in lista_metricas:
             valor = metricas.get(nome)
             if valor is not None:
-
-                # Caso especial para HI5 (S-índex)
                 if nome == 'HI5 (S-índex)':
                     dose_media_norm = metricas.get('Dose média PTV (%)')
                     if dose_media_norm is not None:
                         st.write(f"• {nome}: {valor:.3f}%, associado a uma dose média de {dose_media_norm:.2f}%.")
                     else:
                         st.write(f"• {nome}: {valor:.3f}%")
-                    continue  # evita duplicação, pula o resto do bloco
-
-                # Casos normais
+                    continue
                 if nome in valores_ideais:
                     st.write(f"• {nome}: {valor:.4f}; valor ideal = {valores_ideais[nome]}.")
                 else:
                     st.write(f"• {nome}: {valor:.4f}")
             else:
                 st.write(f"• {nome}: não calculado (dados insuficientes)")
+                bloco_incompleto = True
+    
+        if bloco_incompleto:
+            st.warning("⚠️ Verifique o nome da estrutura e o formato do DVH.")
 
     # Impressão por fração — apenas para SRS
     if tipo_tratamento == "SRS (Radiocirurgia)":   
@@ -633,11 +635,12 @@ if uploaded_file is not None:
             st.write(f"   - Volume de Dose > 30 Gy: {volume_30gy:.2f} cm³" if volume_30gy else "   - Volume de Dose > 30 Gy: não encontrado")
 
     # Bloco V20Gy do Pulmão (somente para SBRT de Pulmão)
-    if tipo_tratamento == "SBRT de Pulmão" and v20gy_pulmao is not None:
-        st.subheader("📦 Porcentagem do pulmão recebendo acima de 20Gy (V20Gy)")
-        st.write(f"• V20Gy do Pulmão = {v20gy_pulmao:.2f}%")
-    elif tipo_tratamento == "SBRT de Pulmão":
-        st.warning("⚠️ Não foi possível calcular o V20Gy do Pulmão. Verifique o nome da estrutura e o formato do DVH.")
+    if tipo_tratamento == "SBRT de Pulmão":
+        st.subheader("?? Porcentagem do pulmão recebendo acima de 20Gy (V20Gy)")
+        if v20gy_pulmao is not None:
+            st.write(f"• V20Gy do Pulmão = {v20gy_pulmao:.2f}%")
+        else:
+            st.write("• V20Gy do Pulmão = não calculado (dados insuficientes)")
     
     # Impressão opcional dos volumes
     if st.checkbox("Deseja ver todos os dados coletados?"):
@@ -679,15 +682,18 @@ if uploaded_file is not None:
             mostrar_volume("Volume da dose de 25 Gy", volume_25gy)
             mostrar_volume("Volume da dose de 30 Gy", volume_30gy)
 
+        elif tipo_tratamento == "SBRT de Pulmão":
+        # Volume total do pulmão
+        volume_pulmao = extrair_volume_por_estrutura(caminho, nome_pulmao)
+        mostrar_volume("Volume do Pulmão", volume_pulmao)
+    
+        # Volume do pulmão que recebe acima de 20 Gy
+        if v20gy_pulmao is not None and volume_pulmao is not None:
+            volume_pulmao_20gy = (v20gy_pulmao / 100) * volume_pulmao
+            mostrar_volume("Volume do Pulmão recebendo acima de 20 Gy", volume_pulmao_20gy)
+        else:
+            st.write("?? Volume do Pulmão recebendo acima de 20 Gy: não calculado (dados insuficientes)")
+
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para o Pulmão a ser avaliado o V20Gy.")
-
-
-
-
-
-
-
-
-
 
