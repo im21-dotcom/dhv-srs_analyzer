@@ -257,6 +257,52 @@ def extrair_dose_media_iso50(filepath):
                     return None
     return None
 
+def calcular_v20gy_pulmao(filepath, nome_pulmao):
+    """
+    Calcula o percentual do volume do pulmão que recebe acima de 20Gy (V20Gy).
+    """
+    volume_total = None
+    volume_acima_20gy = None
+    coletando_dados = False
+
+    with open(filepath, 'r', encoding='utf-8') as file:
+        for linha in file:
+            linha_limpa = linha.strip().lower()
+
+            # Detecta início do bloco da estrutura
+            if linha_limpa.startswith("estrutura:"):
+                nome = linha_limpa.split(":", 1)[-1].strip().lower()
+                coletando_dados = (nome == nome_pulmao.strip().lower())
+                continue
+
+            if coletando_dados:
+                # Coleta volume total do pulmão
+                if "volume [cm³]:" in linha_limpa and volume_total is None:
+                    try:
+                        valor = linha.split(":", 1)[-1].strip().replace(",", ".")
+                        volume_total = float(valor)
+                    except ValueError:
+                        pass
+
+                # Procura linha correspondente a dose 2000 cGy
+                elif linha_limpa.startswith("2000"):  # Dose [cGy] = 2000
+                    colunas = linha.split()
+                    if len(colunas) >= 3:
+                        try:
+                            volume_acima_20gy = float(colunas[2].replace(",", "."))
+                        except ValueError:
+                            pass
+
+                # Sai do bloco ao chegar no próximo cabeçalho
+                elif linha_limpa.startswith("estrutura:") and coletando_dados:
+                    break
+
+    if volume_total and volume_acima_20gy is not None:
+        v20gy = (volume_acima_20gy / volume_total) * 100
+        return v20gy
+    else:
+        return None
+
 # bloco de código para o cálculo das métricas IC,IG,IH e Paddick e demais métricas pedidas
 
 def calcular_metricas_avancadas(dose_prescricao, dose_max_body, dose_max_ptv, dose_min_ptv,
@@ -440,6 +486,12 @@ nome_body = st.text_input("Qual o nome da sua estrutura de Corpo no DVH:", "Body
 nome_overlap = st.text_input("Qual o nome da sua estrutura de Interseção do PTV com a Isodose de Prescrição no DVH:", "Overlap")
 nome_iso50 = st.text_input("Qual o nome da sua estrutura de Isodose de 50% no DVH:", "Dose 50[%]")
 
+# Nome da estrutura de Pulmão (para SBRT de Pulmão)
+if tipo_tratamento == "SBRT de Pulmão":
+    nome_pulmao = st.text_input("Qual o nome da sua estrutura de Pulmão no DVH:", "Pulmao")
+else:
+    nome_pulmao = None
+
 st.sidebar.header("Upload do Arquivo")
 uploaded_file = st.sidebar.file_uploader("Envie o arquivo .txt do DVH", type="txt")
 
@@ -490,6 +542,12 @@ if uploaded_file is not None:
         dose_media_ptv, dose_std_ptv, dose_media_iso50
     )
 
+    # --- Cálculo do V20Gy do Pulmão (somente para SBRT de Pulmão) ---
+    if tipo_tratamento == "SBRT de Pulmão" and nome_pulmao:
+        v20gy_pulmao = calcular_v20gy_pulmao(caminho, nome_pulmao)
+    else:
+        v20gy_pulmao = None
+    
     # Impressão das métricas organizadas por blocos com valores ideais
     st.subheader("📈 Métricas Calculadas")
     
@@ -574,6 +632,13 @@ if uploaded_file is not None:
             st.write(f"   - Volume de Dose > 25 Gy: {volume_25gy:.2f} cm³" if volume_25gy else "   - Volume de Dose > 25 Gy: não encontrado")
             st.write(f"   - Volume de Dose > 30 Gy: {volume_30gy:.2f} cm³" if volume_30gy else "   - Volume de Dose > 30 Gy: não encontrado")
 
+    # Bloco V20Gy do Pulmão (somente para SBRT de Pulmão)
+    if tipo_tratamento == "SBRT de Pulmão" and v20gy_pulmao is not None:
+        st.subheader("📦 Porcentagem do pulmão recebendo acima de 20Gy (V20Gy)")
+        st.write(f"• V20Gy do Pulmão = {v20gy_pulmao:.2f}%")
+    elif tipo_tratamento == "SBRT de Pulmão":
+        st.warning("⚠️ Não foi possível calcular o V20Gy do Pulmão. Verifique o nome da estrutura e o formato do DVH.")
+    
     # Impressão opcional dos volumes
     if st.checkbox("Deseja ver todos os dados coletados?"):
         st.subheader("📊 Resumo dos volumes e doses utilizados")
@@ -614,6 +679,7 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%.")
+
 
 
 
