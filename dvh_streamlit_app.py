@@ -299,9 +299,9 @@ def calcular_v20gy_pulmao(filepath, nome_pulmao):
 
     if volume_total and volume_acima_20gy is not None:
         v20gy = (volume_acima_20gy / volume_total) * 100
-        return v20gy
+        return v20gy, volume_acima_20gy
     else:
-        return None
+        return None, None
 
 # bloco de código para o cálculo das métricas IC,IG,IH e Paddick e demais métricas pedidas
 
@@ -544,9 +544,9 @@ if uploaded_file is not None:
 
     # --- Cálculo do V20Gy do Pulmão (somente para SBRT de Pulmão) ---
     if tipo_tratamento == "SBRT de Pulmão" and nome_pulmao:
-        v20gy_pulmao = calcular_v20gy_pulmao(caminho, nome_pulmao)
+        v20gy_pulmao, volume_pulmao_20gy = calcular_v20gy_pulmao(caminho, nome_pulmao)
     else:
-        v20gy_pulmao = None
+        v20gy_pulmao, volume_pulmao_20gy = None, None
     
     # Impressão das métricas organizadas por blocos com valores ideais
     st.subheader("📈 Métricas Calculadas")
@@ -683,19 +683,13 @@ if uploaded_file is not None:
             mostrar_volume("Volume da dose de 30 Gy", volume_30gy)
 
         elif tipo_tratamento == "SBRT de Pulmão":
-            # Volume total do pulmão
             volume_pulmao = extrair_volume_por_estrutura(caminho, nome_pulmao)
             mostrar_volume("Volume do Pulmão", volume_pulmao)
-        
-            # Volume do pulmão que recebe acima de 20 Gy
-            if v20gy_pulmao is not None and volume_pulmao is not None:
-                volume_pulmao_20gy = (v20gy_pulmao / 100) * volume_pulmao
-                mostrar_volume("Volume do Pulmão recebendo acima de 20 Gy", volume_pulmao_20gy)
-            else:
-                st.write("?? Volume do Pulmão recebendo acima de 20 Gy: não calculado (dados insuficientes)")
+            mostrar_volume("Volme do Pulmão recebendo acima de 20Gy", volume_pulmao_20gy)
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para o Pulmão a ser avaliado o V20Gy.")
+
 
 
 
