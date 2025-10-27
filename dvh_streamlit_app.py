@@ -670,15 +670,22 @@ if uploaded_file is not None:
         mostrar_volume("Volume da interseção (PTV ∩ 100%)", volume_overlap)
         mostrar_volume("Volume da isodose de 100%", volume_iso100)
         mostrar_volume("Volume da isodose de 50%", volume_iso50)
-        mostrar_volume("Volume da dose de 10 Gy", volume_10gy)
-        mostrar_volume("Volume da dose de 12 Gy", volume_12gy)
-        mostrar_volume("Volume da dose de 18 Gy", volume_18gy)
-        mostrar_volume("Volume da dose de 20 Gy", volume_20gy)
-        mostrar_volume("Volume da dose de 25 Gy", volume_25gy)
-        mostrar_volume("Volume da dose de 30 Gy", volume_30gy)
+        
+        if tipo_tratamento == "SRS (Radiocirurgia)":
+            mostrar_volume("Volume da dose de 10 Gy", volume_10gy)
+            mostrar_volume("Volume da dose de 12 Gy", volume_12gy)
+            mostrar_volume("Volume da dose de 18 Gy", volume_18gy)
+            mostrar_volume("Volume da dose de 20 Gy", volume_20gy)
+            mostrar_volume("Volume da dose de 25 Gy", volume_25gy)
+            mostrar_volume("Volume da dose de 30 Gy", volume_30gy)
+
+        if tipo_tratamento == "SBRT de Pulmão":
+            mostrar_volume("Volume do Pulmão", volume_total)
+            mostrat_volume("Volume da dose de 20 Gy no Pulmão", volume_acima_20gy)
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SBRT de Pulmão, também é necessário uma estrutuar para o Pulmão a ser avaliado o V20Gy.")
+
 
 
 
