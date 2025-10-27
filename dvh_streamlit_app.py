@@ -636,7 +636,7 @@ if uploaded_file is not None:
 
     # Bloco V20Gy do Pulmão (somente para SBRT de Pulmão)
     if tipo_tratamento == "SBRT de Pulmão":
-        st.subheader("?? Porcentagem do pulmão recebendo acima de 20Gy (V20Gy)")
+        st.subheader("📦 Porcentagem do pulmão recebendo acima de 20Gy (V20Gy)")
         if v20gy_pulmao is not None:
             st.write(f"• V20Gy do Pulmão = {v20gy_pulmao:.2f}%")
         else:
@@ -689,6 +689,7 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para o Pulmão a ser avaliado o V20Gy.")
+
 
 
 
