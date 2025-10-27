@@ -613,7 +613,7 @@ if uploaded_file is not None:
                 bloco_incompleto = True
     
         if bloco_incompleto:
-            st.warning("⚠️ Verifique o nome da estrutura e o formato do DVH.")
+            st.warning("⚠️ Verifique o nome das estruturas e o formato do DVH.")
 
     # Impressão por fração — apenas para SRS
     if tipo_tratamento == "SRS (Radiocirurgia)":   
@@ -696,5 +696,6 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para o Pulmão a ser avaliado o V20Gy.")
+
 
 
