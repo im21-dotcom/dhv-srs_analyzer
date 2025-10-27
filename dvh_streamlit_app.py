@@ -259,49 +259,66 @@ def extrair_dose_media_iso50(filepath):
 
 def calcular_v20gy_pulmao(filepath, nome_pulmao):
     """
-    Calcula o percentual do volume do pulmão que recebe acima de 20Gy (V20Gy).
+    Calcula o percentual do volume do pulmão que recebe acima de 20 Gy (V20Gy)
+    e retorna também o volume absoluto (cm³), com alta precisão.
     """
+
     volume_total = None
     volume_acima_20gy = None
     coletando_dados = False
+    dentro_tabela = False
 
     with open(filepath, 'r', encoding='utf-8') as file:
         for linha in file:
-            linha_limpa = linha.strip().lower()
+            linha_limpa = linha.strip()
 
-            # Detecta início do bloco da estrutura
-            if linha_limpa.startswith("estrutura:"):
+            # Detecta início do bloco da estrutura Pulmão
+            if linha_limpa.lower().startswith("estrutura:"):
                 nome = linha_limpa.split(":", 1)[-1].strip().lower()
                 coletando_dados = (nome == nome_pulmao.strip().lower())
+                dentro_tabela = False
                 continue
 
-            if coletando_dados:
+            if not coletando_dados:
+                continue
+
+            # Detecta início da tabela de DVH
+            if "Dose relativa [%]" in linha and "Volume da estrutura" in linha:
+                dentro_tabela = True
+                continue
+
+            if not dentro_tabela:
                 # Coleta volume total do pulmão
-                if "volume [cm³]:" in linha_limpa and volume_total is None:
+                if "volume [cm³]:" in linha_limpa.lower() and volume_total is None:
                     try:
                         valor = linha.split(":", 1)[-1].strip().replace(",", ".")
                         volume_total = float(valor)
                     except ValueError:
                         pass
+                continue
 
-                # Procura linha correspondente a dose 2000 cGy
-                elif linha_limpa.startswith("2000"):  # Dose [cGy] = 2000
-                    colunas = linha.split()
-                    if len(colunas) >= 3:
-                        try:
-                            volume_acima_20gy = float(colunas[2].replace(",", "."))
-                        except ValueError:
-                            pass
+            # Tenta ler linhas de dados da tabela (dose, dose relativa, volume)
+            partes = linha_limpa.split()
+            if len(partes) < 3:
+                continue
 
-                # Sai do bloco ao chegar no próximo cabeçalho
-                elif linha_limpa.startswith("estrutura:") and coletando_dados:
-                    break
+            try:
+                dose_cgy = float(partes[0].replace(",", "."))
+                volume = float(partes[2].replace(",", "."))
+            except ValueError:
+                continue
 
-    if volume_total and volume_acima_20gy is not None:
+            # Usa comparação numérica com tolerância para evitar erros de formatação
+            if abs(dose_cgy - 2000.0) < 0.05:  # tolerância de 0.05 cGy
+                volume_acima_20gy = volume
+                break  # encontramos a linha exata, não precisamos continuar
+
+    if volume_total is not None and volume_acima_20gy is not None:
         v20gy = (volume_acima_20gy / volume_total) * 100
         return v20gy, volume_acima_20gy
     else:
         return None, None
+
 
 # bloco de código para o cálculo das métricas IC,IG,IH e Paddick e demais métricas pedidas
 
@@ -689,6 +706,7 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para o Pulmão a ser avaliado o V20Gy.")
+
 
 
 
