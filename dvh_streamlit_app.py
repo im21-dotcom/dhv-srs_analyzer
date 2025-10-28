@@ -765,7 +765,7 @@ if uploaded_file is not None:
     if salvar_opcao == "Sim":
         # Monta dicionário de volumes/doses para salvar
         volumes_dict = {
-            "Dose de prescrição": dose_prescricao,
+            "Dose de prescrição (cGy)": dose_prescricao,
             "Dose máxima Body (cGy)": dose_max_body,
             "Dose máxima PTV (cGy)": dose_max_ptv,
             "Dose mínima PTV (cGy)": dose_min_ptv,
@@ -780,12 +780,12 @@ if uploaded_file is not None:
 
         if tipo_tratamento == "SRS (Radiocirurgia)":
             volumes_dict.update({
-                "Volume >10 Gy": volume_10gy,
-                "Volume >12 Gy": volume_12gy,
-                "Volume >18 Gy": volume_18gy,
-                "Volume >20 Gy": volume_20gy,
-                "Volume >25 Gy": volume_25gy,
-                "Volume >30 Gy": volume_30gy,
+                "Volume >10 Gy (cm³)": volume_10gy,
+                "Volume >12 Gy (cm³)": volume_12gy,
+                "Volume >18 Gy (cm³)": volume_18gy,
+                "Volume >20 Gy (cm³)": volume_20gy,
+                "Volume >25 Gy (cm³)": volume_25gy,
+                "Volume >30 Gy (cm³)": volume_30gy,
             })
 
         elif tipo_tratamento == "SBRT de Pulmão":
@@ -801,5 +801,6 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para o Pulmão a ser avaliado o V20Gy.")
+
 
 
