@@ -518,20 +518,20 @@ def salvar_em_planilha(tipo_tratamento, metricas, volumes):
             ws = sh.worksheet(tipo_tratamento)
         except gspread.WorksheetNotFound:
             ws = sh.add_worksheet(title=tipo_tratamento, rows="100", cols="20")
-            ws.append_row(["Nome", "Valor", "Unidade"])
+            ws.append_row(["Nome", "Valor"])
 
         linhas = []
         from datetime import datetime
-        linhas.append(["Data/Hora", datetime.now().strftime("%d/%m/%Y %H:%M"), ""])
+        linhas.append(["Data/Hora", datetime.now().strftime("%d/%m/%Y %H:%M")])
         
         # Adiciona métricas
         for nome, valor in metricas.items():
-            linhas.append([nome, valor if valor is not None else "não calculado", ""])
+            linhas.append([nome, valor if valor is not None else "não calculado"])
 
         # Adiciona volumes
         for nome, valor in volumes.items():
             unidade = "cm³" if "Volume" in nome else "cGy"
-            linhas.append([nome, valor if valor is not None else "não encontrado", unidade])
+            linhas.append([nome, valor if valor is not None else "não encontrado"])
 
         ws.append_rows(linhas)
         st.success(f"✅ Dados adicionados à aba '{tipo_tratamento}' com sucesso!")
@@ -801,6 +801,7 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para o Pulmão a ser avaliado o V20Gy.")
+
 
 
 
