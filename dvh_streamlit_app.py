@@ -1,6 +1,18 @@
 import streamlit as st
 import tempfile
 import math
+import gspread
+from google.oauth2.service_account import Credentials
+
+# ------------------------- Integração com Google Sheets -------------------------
+try:
+    creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"])
+    gc = gspread.authorize(creds)
+    SHEET_ID = st.secrets["SHEET"]["id"]
+except Exception as e:
+    st.error(f"❌ Erro ao conectar ao Google Sheets: {e}")
+    gc = None
+    SHEET_ID = None
 
 # ------------------------- Funções auxiliares -------------------------
 # bloco de código para coleta de dados
@@ -487,6 +499,43 @@ def imprimir_metricas_por_fracao(n_fracoes, volume_10gy=None, volume_12gy=None,
     else:
         print("❗ Número de frações inválido. Use 1, 3 ou 5.")
 
+def salvar_em_planilha(tipo_tratamento, metricas, volumes):
+    """Salva as métricas e volumes na aba correspondente no Google Sheets."""
+    if gc is None or SHEET_ID is None:
+        st.warning("⚠️ Conexão com Google Sheets não configurada corretamente.")
+        return
+
+    try:
+        # Abre a planilha
+        sh = gc.open_by_key(SHEET_ID)
+
+        # Verifica se a aba existe, senão cria
+        try:
+            ws = sh.worksheet(tipo_tratamento)
+        except gspread.WorksheetNotFound:
+            ws = sh.add_worksheet(title=tipo_tratamento, rows="100", cols="20")
+            ws.append_row(["Nome", "Valor", "Unidade"])
+
+        linhas = []
+        from datetime import datetime
+        linhas.append(["Data/Hora", datetime.now().strftime("%d/%m/%Y %H:%M"), ""])
+        
+        # Adiciona métricas
+        for nome, valor in metricas.items():
+            linhas.append([nome, valor if valor is not None else "não calculado", ""])
+
+        # Adiciona volumes
+        for nome, valor in volumes.items():
+            unidade = "cm³" if "Volume" in nome else "cGy"
+            linhas.append([nome, valor if valor is not None else "não encontrado", unidade])
+
+        ws.append_rows(linhas)
+        st.success(f"✅ Dados adicionados à aba '{tipo_tratamento}' com sucesso!")
+
+    except Exception as e:
+        st.error(f"❌ Erro ao salvar na planilha: {e}")
+
+
 # ------------------------- Interface Streamlit -------------------------
 st.title("Análise de DVH - Radioterapia")
 
@@ -704,11 +753,48 @@ if uploaded_file is not None:
             mostrar_volume("Volume do Pulmão", volume_pulmao)
             mostrar_volume("Volme do Pulmão recebendo acima de 20Gy", volume_pulmao_20gy)
 
+    # --------------------------------------------------------------------
+    # PERGUNTA AO USUÁRIO: Deseja salvar na planilha?
+    # --------------------------------------------------------------------
+    salvar_opcao = st.radio("Deseja que as métricas calculadas sejam adicionadas à planilha?", ["Não", "Sim"])
+
+    if salvar_opcao == "Sim":
+        # Monta dicionário de volumes/doses para salvar
+        volumes_dict = {
+            "Dose de prescrição": dose_prescricao,
+            "Dose máxima Body (cGy)": dose_max_body,
+            "Dose máxima PTV (cGy)": dose_max_ptv,
+            "Dose mínima PTV (cGy)": dose_min_ptv,
+            "Dose média PTV (cGy)": dose_media_ptv,
+            "STD PTV (cGy)": dose_std_ptv,
+            "Dose média Isodose 50% (cGy)": dose_media_iso50,
+            "Volume PTV (cm³)": volume_ptv,
+            "Volume Overlap (cm³)": volume_overlap,
+            "Volume Isodose 100% (cm³)": volume_iso100,
+            "Volume Isodose 50% (cm³)": volume_iso50,
+        }
+
+        if tipo_tratamento == "SRS (Radiocirurgia)":
+            volumes_dict.update({
+                "Volume >10 Gy": volume_10gy,
+                "Volume >12 Gy": volume_12gy,
+                "Volume >18 Gy": volume_18gy,
+                "Volume >20 Gy": volume_20gy,
+                "Volume >25 Gy": volume_25gy,
+                "Volume >30 Gy": volume_30gy,
+            })
+
+        elif tipo_tratamento == "SBRT de Pulmão":
+            volume_pulmao = extrair_volume_por_estrutura(caminho, nome_pulmao)
+            volumes_dict.update({
+                "Volume Pulmão (cm³)": volume_pulmao,
+                "Volume Pulmão >20 Gy (cm³)": volume_pulmao_20gy,
+                "V20Gy Pulmão (%)": v20gy_pulmao,
+            })
+
+        # Envia para planilha
+        salvar_em_planilha(tipo_tratamento, metricas, volumes_dict)
+
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para o Pulmão a ser avaliado o V20Gy.")
-
-
-
-
-
 
