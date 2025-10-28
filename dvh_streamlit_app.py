@@ -504,36 +504,51 @@ def imprimir_metricas_por_fracao(n_fracoes, volume_10gy=None, volume_12gy=None,
         print("❗ Número de frações inválido. Use 1, 3 ou 5.")
 
 def salvar_em_planilha(tipo_tratamento, metricas, volumes):
-    """Salva as métricas e volumes na aba correspondente no Google Sheets."""
+    """Salva métricas e volumes na aba correspondente no Google Sheets no formato horizontal."""
     if gc is None or SHEET_ID is None:
         st.warning("⚠️ Conexão com Google Sheets não configurada corretamente.")
         return
 
     try:
-        # Abre a planilha
         sh = gc.open_by_key(SHEET_ID)
 
-        # Verifica se a aba existe, senão cria
+        # Tenta abrir a aba existente ou cria uma nova
         try:
             ws = sh.worksheet(tipo_tratamento)
         except gspread.WorksheetNotFound:
-            ws = sh.add_worksheet(title=tipo_tratamento, rows="100", cols="20")
-            ws.append_row(["Nome", "Valor"])
+            ws = sh.add_worksheet(title=tipo_tratamento, rows="100", cols="100")
 
-        linhas = []
+        # Combina métricas e volumes em um único dicionário
         from datetime import datetime
-        linhas.append(["Data/Hora", datetime.now().strftime("%d/%m/%Y %H:%M")])
-        
-        # Adiciona métricas
-        for nome, valor in metricas.items():
-            linhas.append([nome, valor if valor is not None else "não calculado"])
+        dados = {
+            "Data/Hora": datetime.now().strftime("%d/%m/%Y %H:%M"),
+            **metricas,
+            **volumes
+        }
 
-        # Adiciona volumes
-        for nome, valor in volumes.items():
-            unidade = "cm³" if "Volume" in nome else "cGy"
-            linhas.append([nome, valor if valor is not None else "não encontrado"])
+        # Lê o cabeçalho atual (primeira linha)
+        cabecalho = ws.row_values(1)
 
-        ws.append_rows(linhas)
+        # Se a planilha estiver vazia (sem cabeçalho), escreve o cabeçalho e os valores
+        if not cabecalho:
+            ws.insert_row(list(dados.keys()), index=1)
+            ws.insert_row(list(dados.values()), index=2)
+            st.success(f"✅ Dados enviados à aba '{tipo_tratamento}' com sucesso (novo cabeçalho criado)!")
+            return
+
+        # Garante que todas as novas métricas apareçam no cabeçalho (em novas colunas se necessário)
+        novos_campos = [campo for campo in dados.keys() if campo not in cabecalho]
+        if novos_campos:
+            ws.insert_cols([novos_campos], col=len(cabecalho) + 1)
+            for i, campo in enumerate(novos_campos):
+                ws.update_cell(1, len(cabecalho) + i + 1, campo)
+            cabecalho += novos_campos  # Atualiza cabeçalho em memória
+
+        # Cria uma lista de valores na ordem correta do cabeçalho
+        valores_linha = [dados.get(c, "") for c in cabecalho]
+
+        # Adiciona a nova linha de valores (abaixo das existentes)
+        ws.append_row(valores_linha)
         st.success(f"✅ Dados adicionados à aba '{tipo_tratamento}' com sucesso!")
 
     except Exception as e:
@@ -801,6 +816,7 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para o Pulmão a ser avaliado o V20Gy.")
+
 
 
 
