@@ -803,59 +803,77 @@ if uploaded_file is not None:
             mostrar_volume("Volume do Pulmão", volume_pulmao)
             mostrar_volume("Volme do Pulmão recebendo acima de 20Gy", volume_pulmao_20gy)
 
-    # --------------------------------------------------------------------
-    # PERGUNTA AO USUÁRIO: Deseja salvar na planilha?
-    # --------------------------------------------------------------------
-    salvar_opcao = st.radio(
+    # ---------------------------------------------------------------
+    # 🔄 Função: enviar dados para a planilha Google Sheets
+    # ---------------------------------------------------------------
+    def enviar_para_planilha():
+        """Envia as métricas e volumes para o Google Sheets e reseta a opção do usuário."""
+        try:
+            # Monta dicionário de volumes/doses para salvar
+            volumes_dict = {
+                "Dose de prescrição (cGy)": dose_prescricao,
+                "Dose máxima Body (cGy)": dose_max_body,
+                "Dose máxima PTV (cGy)": dose_max_ptv,
+                "Dose mínima PTV (cGy)": dose_min_ptv,
+                "Dose média PTV (cGy)": dose_media_ptv,
+                "STD PTV (cGy)": dose_std_ptv,
+                "Dose média Isodose 50% (cGy)": dose_media_iso50,
+                "Volume PTV (cm³)": volume_ptv,
+                "Volume Overlap (cm³)": volume_overlap,
+                "Volume Isodose 100% (cm³)": volume_iso100,
+                "Volume Isodose 50% (cm³)": volume_iso50,
+            }
+    
+            # Adiciona volumes específicos conforme tipo de tratamento
+            if tipo_tratamento == "SRS (Radiocirurgia)":
+                volumes_dict.update({
+                    "Volume >10 Gy (cm³)": volume_10gy,
+                    "Volume >12 Gy (cm³)": volume_12gy,
+                    "Volume >18 Gy (cm³)": volume_18gy,
+                    "Volume >20 Gy (cm³)": volume_20gy,
+                    "Volume >25 Gy (cm³)": volume_25gy,
+                    "Volume >30 Gy (cm³)": volume_30gy,
+                    "Fracionamento": n_frações,
+                })
+    
+            elif tipo_tratamento == "SBRT de Pulmão":
+                volume_pulmao = extrair_volume_por_estrutura(caminho, nome_pulmao)
+                volumes_dict.update({
+                    "Volume Pulmão (cm³)": volume_pulmao,
+                    "Volume Pulmão >20 Gy (cm³)": volume_pulmao_20gy,
+                    "V20Gy Pulmão (%)": v20gy_pulmao,
+                })
+    
+            # Envia para a planilha
+            salvar_em_planilha(tipo_tratamento, metricas, volumes_dict, nome_paciente, id_paciente)
+    
+            # ✅ Reseta a opção de salvamento para "Não" com segurança
+            st.session_state.salvar_opcao = "Não"
+    
+        except Exception as e:
+            st.error(f"❌ Erro ao enviar para planilha: {e}")
+    
+    
+    # ---------------------------------------------------------------
+    # 🗳️ Interface: Pergunta ao usuário sobre salvar métricas em planilha
+    # ---------------------------------------------------------------
+    
+    # Inicializa estado padrão
+    if "salvar_opcao" not in st.session_state:
+        st.session_state.salvar_opcao = "Não"
+    
+    # Widget de seleção com callback automático
+    st.radio(
         "Deseja que as métricas calculadas sejam adicionadas à planilha?",
         ["Não", "Sim"],
-        key="salvar_opcao"
+        key="salvar_opcao",
+        on_change=enviar_para_planilha,  # ← chama automaticamente a função quando muda para "Sim"
     )
 
-    if salvar_opcao == "Sim":
-        # Monta dicionário de volumes/doses para salvar
-        volumes_dict = {
-            "Dose de prescrição (cGy)": dose_prescricao,
-            "Dose máxima Body (cGy)": dose_max_body,
-            "Dose máxima PTV (cGy)": dose_max_ptv,
-            "Dose mínima PTV (cGy)": dose_min_ptv,
-            "Dose média PTV (cGy)": dose_media_ptv,
-            "STD PTV (cGy)": dose_std_ptv,
-            "Dose média Isodose 50% (cGy)": dose_media_iso50,
-            "Volume PTV (cm³)": volume_ptv,
-            "Volume Overlap (cm³)": volume_overlap,
-            "Volume Isodose 100% (cm³)": volume_iso100,
-            "Volume Isodose 50% (cm³)": volume_iso50,
-        }
-
-        if tipo_tratamento == "SRS (Radiocirurgia)":
-            volumes_dict.update({
-                "Volume >10 Gy (cm³)": volume_10gy,
-                "Volume >12 Gy (cm³)": volume_12gy,
-                "Volume >18 Gy (cm³)": volume_18gy,
-                "Volume >20 Gy (cm³)": volume_20gy,
-                "Volume >25 Gy (cm³)": volume_25gy,
-                "Volume >30 Gy (cm³)": volume_30gy,
-                "Fracionamento": n_frações,
-            })
-
-        elif tipo_tratamento == "SBRT de Pulmão":
-            volume_pulmao = extrair_volume_por_estrutura(caminho, nome_pulmao)
-            volumes_dict.update({
-                "Volume Pulmão (cm³)": volume_pulmao,
-                "Volume Pulmão >20 Gy (cm³)": volume_pulmao_20gy,
-                "V20Gy Pulmão (%)": v20gy_pulmao,
-            })
-
-        # Envia para planilha
-        salvar_em_planilha(tipo_tratamento, metricas, volumes_dict, nome_paciente, id_paciente)
-
-        # ✅ Reseta a opção para "Não" sem gerar conflito de renderização
-        st.session_state.salvar_opcao = "Não"
-        st.rerun()
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para o Pulmão a ser avaliado o V20Gy.")
+
 
 
 
