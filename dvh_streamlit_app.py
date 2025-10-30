@@ -809,7 +809,6 @@ if uploaded_file is not None:
     def enviar_para_planilha():
         """Envia as métricas e volumes para o Google Sheets e reseta a opção do usuário."""
         try:
-            # Monta dicionário de volumes/doses para salvar
             volumes_dict = {
                 "Dose de prescrição (cGy)": dose_prescricao,
                 "Dose máxima Body (cGy)": dose_max_body,
@@ -847,32 +846,38 @@ if uploaded_file is not None:
             # Envia para a planilha
             salvar_em_planilha(tipo_tratamento, metricas, volumes_dict, nome_paciente, id_paciente)
     
-            # ✅ Reseta a opção de salvamento para "Não" com segurança
+            # ✅ Mostra mensagem de sucesso no placeholder correto
+            st.session_state.mensagem_sucesso_placeholder.success(
+                f"✅ Dados adicionados à aba '{tipo_tratamento}' com sucesso!"
+            )
+    
+            # ✅ Reseta a opção de salvamento para "Não"
             st.session_state.salvar_opcao = "Não"
     
         except Exception as e:
-            st.error(f"❌ Erro ao enviar para planilha: {e}")
+            st.session_state.mensagem_sucesso_placeholder.error(f"❌ Erro ao enviar para planilha: {e}")
     
     
     # ---------------------------------------------------------------
-    # 🗳️ Interface: Pergunta ao usuário sobre salvar métricas em planilha
+    # 🗳️ Interface: Pergunta ao usuário sobre salvar métricas
     # ---------------------------------------------------------------
-    
-    # Inicializa estado padrão
     if "salvar_opcao" not in st.session_state:
         st.session_state.salvar_opcao = "Não"
+    
+    # Cria o placeholder onde a mensagem de sucesso aparecerá
+    st.session_state.mensagem_sucesso_placeholder = st.empty()
     
     # Widget de seleção com callback automático
     st.radio(
         "Deseja que as métricas calculadas sejam adicionadas à planilha?",
         ["Não", "Sim"],
         key="salvar_opcao",
-        on_change=enviar_para_planilha,  # ← chama automaticamente a função quando muda para "Sim"
+        on_change=enviar_para_planilha,
     )
-
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para o Pulmão a ser avaliado o V20Gy.")
+
 
 
 
