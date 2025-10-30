@@ -849,10 +849,13 @@ if uploaded_file is not None:
 
         # Envia para planilha
         salvar_em_planilha(tipo_tratamento, metricas, volumes_dict, nome_paciente, id_paciente)
-        st.session_state.salvar_opcao = "Não"
 
+        # ✅ Reseta a opção para "Não" sem gerar conflito de renderização
+        st.session_state.salvar_opcao = "Não"
+        st.rerun()
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para o Pulmão a ser avaliado o V20Gy.")
+
 
 
