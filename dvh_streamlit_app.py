@@ -514,7 +514,7 @@ def imprimir_metricas_por_fracao(n_fracoes, volume_10gy=None, volume_12gy=None,
     else:
         print("❗ Número de frações inválido. Use 1, 3 ou 5.")
 
-def salvar_em_planilha(tipo_tratamento, metricas, volumes):
+def salvar_em_planilha(tipo_tratamento, metricas, volumes, nome_paciente, id_paciente):
     """Salva métricas e volumes na aba correspondente no Google Sheets no formato horizontal."""
     if gc is None or SHEET_ID is None:
         st.warning("⚠️ Conexão com Google Sheets não configurada corretamente.")
@@ -532,6 +532,8 @@ def salvar_em_planilha(tipo_tratamento, metricas, volumes):
         # Combina métricas e volumes em um único dicionário
         from datetime import datetime
         dados = {
+            "Nome do Paciente": nome_paciente,
+            "ID do Paciente": id_paciente,
             "Data/Hora": datetime.now().strftime("%d/%m/%Y %H:%M"),
             **metricas,
             **volumes
@@ -830,6 +832,7 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para o Pulmão a ser avaliado o V20Gy.")
+
 
 
 
