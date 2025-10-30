@@ -806,7 +806,11 @@ if uploaded_file is not None:
     # --------------------------------------------------------------------
     # PERGUNTA AO USUÁRIO: Deseja salvar na planilha?
     # --------------------------------------------------------------------
-    salvar_opcao = st.radio("Deseja que as métricas calculadas sejam adicionadas à planilha?", ["Não", "Sim"])
+    salvar_opcao = st.radio(
+        "Deseja que as métricas calculadas sejam adicionadas à planilha?",
+        ["Não", "Sim"],
+        key="salvar_opcao"
+    )
 
     if salvar_opcao == "Sim":
         # Monta dicionário de volumes/doses para salvar
@@ -845,20 +849,10 @@ if uploaded_file is not None:
 
         # Envia para planilha
         salvar_em_planilha(tipo_tratamento, metricas, volumes_dict, nome_paciente, id_paciente)
+        st.session_state.salvar_opcao = "Não"
+
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para o Pulmão a ser avaliado o V20Gy.")
-
-
-
-
-
-
-
-
-
-
-
-
 
 
