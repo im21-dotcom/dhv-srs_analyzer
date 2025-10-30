@@ -21,6 +21,17 @@ except Exception as e:
 # ------------------------- Funções auxiliares -------------------------
 # bloco de código para coleta de dados
 
+def extrair_dados_paciente(caminho_arquivo):
+    """Lê as duas primeiras linhas do arquivo DVH e retorna o nome e o ID do paciente."""
+    try:
+        with open(caminho_arquivo, "r", encoding="utf-8") as f:
+            linhas = f.readlines()
+            nome_paciente = linhas[0].strip() if len(linhas) > 0 else "Nome não encontrado"
+            id_paciente = linhas[1].strip() if len(linhas) > 1 else "ID não encontrado"
+        return nome_paciente, id_paciente
+    except Exception:
+        return "Nome não encontrado", "ID não encontrado"
+
 def extrair_volume_dose_100(filepath):
     return extrair_volume_para_dose_relativa(filepath, alvo_dose=100.0)
 
@@ -585,6 +596,8 @@ if uploaded_file is not None:
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         tmp.write(uploaded_file.read())
         caminho = tmp.name
+    # Extrai nome e ID do paciente (primeiras linhas do DVH)
+        nome_paciente, id_paciente = extrair_dados_paciente(caminho)
 
     st.success("✅ Arquivo carregado com sucesso!")
 
@@ -813,10 +826,11 @@ if uploaded_file is not None:
             })
 
         # Envia para planilha
-        salvar_em_planilha(tipo_tratamento, metricas, volumes_dict)
+        salvar_em_planilha(tipo_tratamento, metricas, volumes_dict, nome_paciente, id_paciente)
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para o Pulmão a ser avaliado o V20Gy.")
+
 
 
 
