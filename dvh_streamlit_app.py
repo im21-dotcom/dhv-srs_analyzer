@@ -134,8 +134,56 @@ def extrair_volume_para_dose_relativa(filepath, alvo_dose):
     return _extrair_volume_por_coluna(filepath, alvo_dose, coluna="relativa")
 
 
-def extrair_volume_para_dose_absoluta(filepath, alvo_dose_cgy):
-    return _extrair_volume_por_coluna(filepath, alvo_dose_cgy, coluna="absoluta")
+def extrair_volume_para_dose_absoluta(filepath, alvo_dose_cgy, estrutura_alvo=None):
+    """
+    Extrai o volume (cm³) da estrutura especificada que recebe uma dose absoluta
+    maior ou igual ao valor fornecido (em cGy).
+    """
+    try:
+        with open(filepath, "r", encoding="utf-8") as file:
+            linhas = file.readlines()
+
+        estrutura_atual = None
+        dose_dvh = []
+        volume_dvh = []
+
+        for linha in linhas:
+            linha = linha.strip()
+            if not linha:
+                continue
+
+            # Detecta o início de uma nova estrutura
+            if linha.startswith("Structure:"):
+                estrutura_atual = linha.split(":", 1)[1].strip().lower()
+                continue
+
+            # Se estivermos dentro da estrutura alvo
+            if estrutura_alvo and estrutura_atual == estrutura_alvo.lower():
+                try:
+                    colunas = linha.split()
+                    if len(colunas) >= 2:
+                        dose = float(colunas[0])
+                        volume = float(colunas[1])
+                        dose_dvh.append(dose)
+                        volume_dvh.append(volume)
+                except ValueError:
+                    continue
+
+        # Caso a estrutura alvo não tenha sido encontrada
+        if not dose_dvh:
+            return None
+
+        # Localiza o volume para a dose especificada
+        volume_encontrado = None
+        for i in range(len(dose_dvh)):
+            if dose_dvh[i] >= alvo_dose_cgy:
+                volume_encontrado = volume_dvh[i]
+                break
+
+        return volume_encontrado
+
+    except Exception:
+        return None
 
 
 def _extrair_volume_por_coluna(filepath, alvo_dose, coluna="relativa", estrutura_alvo=None):
@@ -885,5 +933,6 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SRS (Radiocirurgia), também é necessário uma estrutura para o Encéfalo para serem avaliados os volumes de dose associados ao desenvolvimento de radionecrose. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para o Pulmão Ipsilateral a ser avaliado o V20Gy.")
+
 
 
