@@ -54,23 +54,23 @@ def extrair_volume_dose_100(filepath):
 def extrair_volume_dose_50(filepath):
     return extrair_volume_para_dose_relativa(filepath, alvo_dose=50.0)
 
-def extrair_volume_dose_10gy(filepath):
-    return extrair_volume_para_dose_absoluta(filepath, alvo_dose_cgy=1000.0)
+def extrair_volume_dose_10gy(filepath, estrutura_alvo):
+    return extrair_volume_para_dose_absoluta(filepath, alvo_dose_cgy=1000.0, estrutura_alvo=estrutura_alvo)
 
-def extrair_volume_dose_12gy(filepath):
-    return extrair_volume_para_dose_absoluta(filepath, alvo_dose_cgy=1200.0)
+def extrair_volume_dose_12gy(filepath, estrutura_alvo):
+    return extrair_volume_para_dose_absoluta(filepath, alvo_dose_cgy=1200.0, estrutura_alvo=estrutura_alvo)
 
-def extrair_volume_dose_18gy(filepath):
-    return extrair_volume_para_dose_absoluta(filepath, alvo_dose_cgy=1800.0)
+def extrair_volume_dose_18gy(filepath, estrutura_alvo):
+    return extrair_volume_para_dose_absoluta(filepath, alvo_dose_cgy=1800.0, estrutura_alvo=estrutura_alvo)
 
-def extrair_volume_dose_20gy(filepath):
-    return extrair_volume_para_dose_absoluta(filepath, alvo_dose_cgy=2000.0)
+def extrair_volume_dose_20gy(filepath, estrutura_alvo):
+    return extrair_volume_para_dose_absoluta(filepath, alvo_dose_cgy=2000.0, estrutura_alvo=estrutura_alvo)
 
-def extrair_volume_dose_25gy(filepath):
-    return extrair_volume_para_dose_absoluta(filepath, alvo_dose_cgy=2500.0)
+def extrair_volume_dose_25gy(filepath, estrutura_alvo):
+    return extrair_volume_para_dose_absoluta(filepath, alvo_dose_cgy=2500.0, estrutura_alvo=estrutura_alvo)
 
-def extrair_volume_dose_30gy(filepath):
-    return extrair_volume_para_dose_absoluta(filepath, alvo_dose_cgy=3000.0)
+def extrair_volume_dose_30gy(filepath, estrutura_alvo):
+    return extrair_volume_para_dose_absoluta(filepath, alvo_dose_cgy=3000.0, estrutura_alvo=estrutura_alvo)
 
 def extrair_volume_ptv(filepath):
     return extrair_volume_por_estrutura(filepath, estrutura_alvo=nome_ptv.strip().lower())
@@ -138,8 +138,9 @@ def extrair_volume_para_dose_absoluta(filepath, alvo_dose_cgy):
     return _extrair_volume_por_coluna(filepath, alvo_dose_cgy, coluna="absoluta")
 
 
-def _extrair_volume_por_coluna(filepath, alvo_dose, coluna="relativa"):
-    estrutura_alvo = nome_body.lower()
+def _extrair_volume_por_coluna(filepath, alvo_dose, coluna="relativa", estrutura_alvo=None):
+    if estrutura_alvo is None:
+        estrutura_alvo = nome_body.lower()
     coletando_dados = False
     dentro_da_tabela = False
     melhor_aproximacao = None
@@ -595,16 +596,22 @@ tipo_tratamento = st.sidebar.selectbox(
 )
 
 st.write("### Nome das estruturas no DVH")
-nome_ptv = st.text_input("Qual o nome da sua estrutura de PTV no DVH:", "PTV")
-nome_body = st.text_input("Qual o nome da sua estrutura de Corpo no DVH:", "Body")
-nome_overlap = st.text_input("Qual o nome da sua estrutura de Interseção do PTV com a Isodose de Prescrição no DVH:", "Overlap")
-nome_iso50 = st.text_input("Qual o nome da sua estrutura de Isodose de 50% no DVH:", "Dose 50[%]")
+nome_ptv = st.text_input("Qual o nome da sua estrutura de PTV no planejamento?", "PTV")
+nome_body = st.text_input("Qual o nome da sua estrutura de Corpo no planejamento?", "Body")
+nome_overlap = st.text_input("Qual o nome da sua estrutura de Interseção do PTV com a Isodose de Prescrição no planejamento?", "Overlap")
+nome_iso50 = st.text_input("Qual o nome da sua estrutura de Isodose de 50% no planejamento?", "Dose 50[%]")
 
 # Nome da estrutura de Pulmão (para SBRT de Pulmão)
 if tipo_tratamento == "SBRT de Pulmão":
-    nome_pulmao = st.text_input("Qual o nome da sua estrutura de Pulmão no DVH:", "Pulmao")
+    nome_pulmao = st.text_input("Qual o nome da sua estrutura de Pulmão no planejamento?", "Pulmao")
 else:
     nome_pulmao = None
+
+# Nome da estrutura de Encéfalo (para SRS)
+if tipo_tratamento == "SRS (Radiocirurgia)":
+    nome_encefalo = st.text_input("Qual o nome da sua estrutura de Encéfalo no planejamento?", "Encefalo")
+else:
+    nome_encefalo = None
 
 st.sidebar.header("Upload do Arquivo")
 uploaded_file = st.sidebar.file_uploader("Envie o arquivo .txt do DVH", type="txt")
@@ -637,12 +644,13 @@ if uploaded_file is not None:
     volume_overlap = extrair_volume_overlap(caminho)
     volume_iso100 = extrair_volume_dose_100(caminho)
     volume_iso50 = extrair_volume_dose_50(caminho)
-    volume_10gy = extrair_volume_dose_10gy(caminho)
-    volume_12gy = extrair_volume_dose_12gy(caminho)
-    volume_18gy = extrair_volume_dose_18gy(caminho)
-    volume_20gy = extrair_volume_dose_20gy(caminho)
-    volume_25gy = extrair_volume_dose_25gy(caminho)
-    volume_30gy = extrair_volume_dose_30gy(caminho)
+    estrutura_dose = nome_encefalo if tipo_tratamento == "SRS (Radiocirurgia)" else nome_body
+    volume_10gy = extrair_volume_dose_10gy(caminho, estrutura_dose)
+    volume_12gy = extrair_volume_dose_12gy(caminho, estrutura_dose)
+    volume_18gy = extrair_volume_dose_18gy(caminho, estrutura_dose)
+    volume_20gy = extrair_volume_dose_20gy(caminho, estrutura_dose)
+    volume_25gy = extrair_volume_dose_25gy(caminho, estrutura_dose)
+    volume_30gy = extrair_volume_dose_30gy(caminho, estrutura_dose)
 
     # Doses que cobrem X% do PTV (em cGy)
     d2_ptv = extrair_dose_cobrindo_pct_ptv(caminho, 0.02, volume_ptv)
@@ -791,12 +799,12 @@ if uploaded_file is not None:
         mostrar_volume("Volume da isodose de 50%", volume_iso50)
         
         if tipo_tratamento == "SRS (Radiocirurgia)":
-            mostrar_volume("Volume da dose de 10 Gy", volume_10gy)
-            mostrar_volume("Volume da dose de 12 Gy", volume_12gy)
-            mostrar_volume("Volume da dose de 18 Gy", volume_18gy)
-            mostrar_volume("Volume da dose de 20 Gy", volume_20gy)
-            mostrar_volume("Volume da dose de 25 Gy", volume_25gy)
-            mostrar_volume("Volume da dose de 30 Gy", volume_30gy)
+            mostrar_volume("Volume do Encéfalo com dose acima de 10 Gy", volume_10gy)
+            mostrar_volume("Volume do Encéfalo com dose acima de 12 Gy", volume_12gy)
+            mostrar_volume("Volume do Encéfalo com dose acima de 18 Gy", volume_18gy)
+            mostrar_volume("Volume do Encéfalo com dose acima de 20 Gy", volume_20gy)
+            mostrar_volume("Volume do Encéfalo com dose acima de 25 Gy", volume_25gy)
+            mostrar_volume("Volume do Encéfalo com dose acima de 30 Gy", volume_30gy)
 
         elif tipo_tratamento == "SBRT de Pulmão":
             volume_pulmao = extrair_volume_por_estrutura(caminho, nome_pulmao)
@@ -876,9 +884,6 @@ if uploaded_file is not None:
     )
 
 else:
-    st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para o Pulmão a ser avaliado o V20Gy.")
-
-
-
+    st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SRS (Radiocirurgia), também é necessário uma estrutura para o Encéfalo para serem avaliados os volumes de dose associados ao desenvolvimento de radionecrose. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para o Pulmão Ipsilateral a ser avaliado o V20Gy.")
 
 
