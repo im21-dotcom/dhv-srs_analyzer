@@ -66,8 +66,8 @@ def extrair_volume_dose_18gy(filepath, estrutura_alvo):
 def extrair_volume_dose_20gy(filepath, estrutura_alvo):
     return extrair_volume_para_dose_absoluta(filepath, alvo_dose_cgy=2000.0, estrutura_alvo=estrutura_alvo)
 
-def extrair_volume_dose_25gy(filepath, estrutura_alvo):
-    return extrair_volume_para_dose_absoluta(filepath, alvo_dose_cgy=2500.0, estrutura_alvo=estrutura_alvo)
+def extrair_volume_dose_24gy(filepath, estrutura_alvo):
+    return extrair_volume_para_dose_absoluta(filepath, alvo_dose_cgy=2400.0, estrutura_alvo=estrutura_alvo)
 
 def extrair_volume_dose_30gy(filepath, estrutura_alvo):
     return extrair_volume_para_dose_absoluta(filepath, alvo_dose_cgy=3000.0, estrutura_alvo=estrutura_alvo)
@@ -542,7 +542,7 @@ def imprimir_metricas(metricas):
 
 def imprimir_metricas_por_fracao(n_fracoes, volume_10gy=None, volume_12gy=None,
                                   volume_18gy=None, volume_20gy=None,
-                                  volume_25gy=None, volume_30gy=None):
+                                  volume_24gy=None, volume_30gy=None):
     print("\n📦 Volumes de Dose associados ao desenvolvimento de radionecrose:")
 
     if n_fracoes == 1:
@@ -569,8 +569,8 @@ def imprimir_metricas_por_fracao(n_fracoes, volume_10gy=None, volume_12gy=None,
 
     elif n_fracoes == 5:
         print("🔹 Fracionamento: 5 seções de tratamento")
-        if volume_25gy is not None:
-            print(f"   - Volume de Dose > 25 Gy: {volume_25gy:.2f} cm³")
+        if volume_24gy is not None:
+            print(f"   - Volume de Dose > 24 Gy: {volume_24gy:.2f} cm³")
         else:
             print("   - Volume de Dose > 25 Gy: não encontrado")
         if volume_30gy is not None:
@@ -699,7 +699,7 @@ if uploaded_file is not None:
     volume_12gy = extrair_volume_dose_12gy(caminho, estrutura_dose)
     volume_18gy = extrair_volume_dose_18gy(caminho, estrutura_dose)
     volume_20gy = extrair_volume_dose_20gy(caminho, estrutura_dose)
-    volume_25gy = extrair_volume_dose_25gy(caminho, estrutura_dose)
+    volume_24gy = extrair_volume_dose_24gy(caminho, estrutura_dose)
     volume_30gy = extrair_volume_dose_30gy(caminho, estrutura_dose)
 
     # Doses que cobrem X% do PTV (em cGy)
@@ -805,7 +805,7 @@ if uploaded_file is not None:
     
         elif n_frações == 5:
             st.write("🔹 Fracionamento: 5 seções de tratamento")
-            st.write(f"   - Volume de Dose > 25 Gy: {volume_25gy:.2f} cm³" if volume_25gy else "   - Volume de Dose > 25 Gy: não encontrado")
+            st.write(f"   - Volume de Dose > 24 Gy: {volume_24gy:.2f} cm³" if volume_24gy else "   - Volume de Dose > 24 Gy: não encontrado")
             st.write(f"   - Volume de Dose > 30 Gy: {volume_30gy:.2f} cm³" if volume_30gy else "   - Volume de Dose > 30 Gy: não encontrado")
 
     # Bloco V20Gy do Pulmão (somente para SBRT de Pulmão)
@@ -853,7 +853,7 @@ if uploaded_file is not None:
             mostrar_volume("Volume do Encéfalo com dose acima de 12 Gy", volume_12gy)
             mostrar_volume("Volume do Encéfalo com dose acima de 18 Gy", volume_18gy)
             mostrar_volume("Volume do Encéfalo com dose acima de 20 Gy", volume_20gy)
-            mostrar_volume("Volume do Encéfalo com dose acima de 25 Gy", volume_25gy)
+            mostrar_volume("Volume do Encéfalo com dose acima de 24 Gy", volume_24gy)
             mostrar_volume("Volume do Encéfalo com dose acima de 30 Gy", volume_30gy)
 
         elif tipo_tratamento == "SBRT de Pulmão":
@@ -889,7 +889,7 @@ if uploaded_file is not None:
                     "Volume >12 Gy (cm³)": volume_12gy,
                     "Volume >18 Gy (cm³)": volume_18gy,
                     "Volume >20 Gy (cm³)": volume_20gy,
-                    "Volume >25 Gy (cm³)": volume_25gy,
+                    "Volume >24 Gy (cm³)": volume_24gy,
                     "Volume >30 Gy (cm³)": volume_30gy,
                     "Fracionamento": n_frações,
                 })
@@ -941,6 +941,7 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SRS (Radiocirurgia), também é necessário uma estrutura para o Encéfalo para serem avaliados os volumes de dose associados ao desenvolvimento de radionecrose. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para o Pulmão Ipsilateral a ser avaliado o V20Gy.")
+
 
 
 
