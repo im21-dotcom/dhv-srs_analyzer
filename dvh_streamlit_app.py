@@ -909,6 +909,11 @@ if uploaded_file is not None:
             st.session_state.mensagem_sucesso_placeholder.success(
                 f"✅ Dados adicionados à aba '{tipo_tratamento}' com sucesso!"
             )
+
+             # 🔗 Exibe o link clicável para abrir a planilha
+            if SHEET_ID:
+                url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit"
+                st.markdown(f"[📊 Abrir planilha no Google Sheets]({url})", unsafe_allow_html=True)
     
             # ✅ Reseta a opção de salvamento para "Não"
             st.session_state.salvar_opcao = "Não"
@@ -936,6 +941,7 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SRS (Radiocirurgia), também é necessário uma estrutura para o Encéfalo para serem avaliados os volumes de dose associados ao desenvolvimento de radionecrose. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para o Pulmão Ipsilateral a ser avaliado o V20Gy.")
+
 
 
 
