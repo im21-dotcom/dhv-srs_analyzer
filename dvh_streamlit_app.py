@@ -860,18 +860,7 @@ if uploaded_file is not None:
             volume_pulmao = extrair_volume_por_estrutura(caminho, nome_pulmao)
             mostrar_volume("Volume do Pulmão", volume_pulmao)
             mostrar_volume("Volme do Pulmão recebendo acima de 20Gy", volume_pulmao_20gy)
-
-    # debug: listar os nomes de estruturas detectadas (remova depois)
-    if 'estruturas_encontradas' not in st.session_state:
-        st.session_state['estruturas_encontradas'] = set()
-    
-    # dentro do loop de leitura, ao detectar uma nova estrutura:
-    if eh_inicio_estrutura(linha):
-        nome = linha.split(":",1)[1].strip()
-        st.session_state['estruturas_encontradas'].add(nome)
-    # depois do parsing
-    st.write("Estruturas encontradas no arquivo:", sorted(list(st.session_state['estruturas_encontradas'])))
-
+            
 
     # ---------------------------------------------------------------
     # 🔄 Função: enviar dados para a planilha Google Sheets
@@ -947,6 +936,7 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SRS (Radiocirurgia), também é necessário uma estrutura para o Encéfalo para serem avaliados os volumes de dose associados ao desenvolvimento de radionecrose. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para o Pulmão Ipsilateral a ser avaliado o V20Gy.")
+
 
 
 
