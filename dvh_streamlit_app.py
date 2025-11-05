@@ -137,7 +137,8 @@ def extrair_volume_para_dose_relativa(filepath, alvo_dose):
 def extrair_volume_para_dose_absoluta(filepath, alvo_dose_cgy, estrutura_alvo=None):
     """
     Extrai o volume (cm³) da estrutura especificada que recebe uma dose absoluta
-    maior ou igual ao valor fornecido (em cGy).
+    maior ou igual ao valor fornecido (em cGy). Suporta tanto 'Estrutura:' (PT-BR)
+    quanto 'Structure:' (EN).
     """
     try:
         with open(filepath, "r", encoding="utf-8") as file:
@@ -148,39 +149,40 @@ def extrair_volume_para_dose_absoluta(filepath, alvo_dose_cgy, estrutura_alvo=No
         volume_dvh = []
 
         for linha in linhas:
-            linha = linha.strip()
-            if not linha:
+            linha_stripped = linha.strip()
+            if not linha_stripped:
                 continue
 
-            # Detecta o início de uma nova estrutura
-            if linha.startswith("Structure:") or linha.starswith("Estrutura:"):
-                estrutura_atual = linha.split(":", 1)[1].strip().lower()
+            # Detecta início de nova estrutura (suporta português e inglês)
+            low = linha_stripped.lower()
+            if low.startswith("estrutura:") or low.startswith("structure:"):
+                # pega o nome após os dois pontos e normaliza
+                estrutura_atual = linha_stripped.split(":", 1)[1].strip().lower()
                 continue
 
-            # Se estivermos dentro da estrutura alvo
-            if estrutura_alvo and estrutura_atual == estrutura_alvo.lower():
+            # Se estivermos dentro da estrutura alvo (comparação normalizada)
+            if estrutura_alvo and estrutura_atual == estrutura_alvo.strip().lower():
                 try:
-                    colunas = linha.split()
-                    if len(colunas) >= 2:
-                        dose = float(colunas[0])
-                        volume = float(colunas[1])
+                    partes = linha_stripped.split()
+                    # Em muitos DVHs a coluna de volume é a última coluna; usamos a última
+                    if len(partes) >= 2:
+                        dose = float(partes[0].replace(",", "."))
+                        volume = float(partes[-1].replace(",", "."))
                         dose_dvh.append(dose)
                         volume_dvh.append(volume)
                 except ValueError:
                     continue
 
-        # Caso a estrutura alvo não tenha sido encontrada
+        # Se não encontrou dados para a estrutura alvo
         if not dose_dvh:
             return None
 
-        # Localiza o volume para a dose especificada
-        volume_encontrado = None
-        for i in range(len(dose_dvh)):
-            if dose_dvh[i] >= alvo_dose_cgy:
-                volume_encontrado = volume_dvh[i]
-                break
+        # Encontra o primeiro volume com dose >= alvo
+        for i, d in enumerate(dose_dvh):
+            if d >= alvo_dose_cgy:
+                return volume_dvh[i]
 
-        return volume_encontrado
+        return None
 
     except Exception:
         return None
@@ -198,7 +200,7 @@ def _extrair_volume_por_coluna(filepath, alvo_dose, coluna="relativa", estrutura
         for linha in file:
             linha_limpa = linha.strip()
 
-            if linha_limpa.lower().startswith("estrutura:"):
+            if linha_limpa.lower().startswith("estrutura:") or linha_limpa.lower().startswith("structure:"):
                 nome_estrutura = linha_limpa.split(":", 1)[-1].strip().lower()
                 coletando_dados = (nome_estrutura == estrutura_alvo)
                 dentro_da_tabela = False
@@ -859,6 +861,18 @@ if uploaded_file is not None:
             mostrar_volume("Volume do Pulmão", volume_pulmao)
             mostrar_volume("Volme do Pulmão recebendo acima de 20Gy", volume_pulmao_20gy)
 
+    # debug: listar os nomes de estruturas detectadas (remova depois)
+    if 'estruturas_encontradas' not in st.session_state:
+        st.session_state['estruturas_encontradas'] = set()
+    
+    # dentro do loop de leitura, ao detectar uma nova estrutura:
+    if eh_inicio_estrutura(linha):
+        nome = linha.split(":",1)[1].strip()
+        st.session_state['estruturas_encontradas'].add(nome)
+    # depois do parsing
+    st.write("Estruturas encontradas no arquivo:", sorted(list(st.session_state['estruturas_encontradas'])))
+
+
     # ---------------------------------------------------------------
     # 🔄 Função: enviar dados para a planilha Google Sheets
     # ---------------------------------------------------------------
@@ -933,6 +947,7 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SRS (Radiocirurgia), também é necessário uma estrutura para o Encéfalo para serem avaliados os volumes de dose associados ao desenvolvimento de radionecrose. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para o Pulmão Ipsilateral a ser avaliado o V20Gy.")
+
 
 
 
