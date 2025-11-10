@@ -653,7 +653,7 @@ nome_iso50 = st.text_input("Qual o nome da sua estrutura de Isodose de 50% no pl
 
 # Nome da estrutura de Pulmão (para SBRT de Pulmão)
 if tipo_tratamento == "SBRT de Pulmão":
-    nome_pulmao = st.text_input("Qual o nome da sua estrutura de Pulmões-PTV no planejamento?", "Pulmao")
+    nome_pulmao = st.text_input("Qual o nome da sua estrutura de Pulmões-PTV no planejamento?", "Pulmões - PTV")
 else:
     nome_pulmao = None
 
@@ -941,6 +941,7 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SRS (Radiocirurgia), também é necessário uma estrutura para o Encéfalo para serem avaliados os volumes de dose associados ao desenvolvimento de radionecrose. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para a soma dos Pulmões excluindo o PTV a ser avaliado o V20Gy.")
+
 
 
 
