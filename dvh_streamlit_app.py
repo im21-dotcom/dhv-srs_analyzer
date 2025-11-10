@@ -653,7 +653,7 @@ nome_iso50 = st.text_input("Qual o nome da sua estrutura de Isodose de 50% no pl
 
 # Nome da estrutura de Pulmão (para SBRT de Pulmão)
 if tipo_tratamento == "SBRT de Pulmão":
-    nome_pulmao = st.text_input("Qual o nome da sua estrutura de Pulmão no planejamento?", "Pulmao")
+    nome_pulmao = st.text_input("Qual o nome da sua estrutura de Pulmões-PTV no planejamento?", "Pulmao")
 else:
     nome_pulmao = None
 
@@ -897,9 +897,9 @@ if uploaded_file is not None:
             elif tipo_tratamento == "SBRT de Pulmão":
                 volume_pulmao = extrair_volume_por_estrutura(caminho, nome_pulmao)
                 volumes_dict.update({
-                    "Volume Pulmão (cm³)": volume_pulmao,
-                    "Volume Pulmão >20 Gy (cm³)": volume_pulmao_20gy,
-                    "V20Gy Pulmão (%)": v20gy_pulmao,
+                    "Volume Pulmões Soma (cm³)": volume_pulmao,
+                    "Volume Pulmões Soma >20 Gy (cm³)": volume_pulmao_20gy,
+                    "V20Gy Pulmões Soma (%)": v20gy_pulmao,
                 })
     
             # Envia para a planilha
@@ -940,7 +940,8 @@ if uploaded_file is not None:
         st.markdown(f"[📊 Abrir planilha no Google Sheets]({url})", unsafe_allow_html=True)
 
 else:
-    st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SRS (Radiocirurgia), também é necessário uma estrutura para o Encéfalo para serem avaliados os volumes de dose associados ao desenvolvimento de radionecrose. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para o Pulmão Ipsilateral a ser avaliado o V20Gy.")
+    st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SRS (Radiocirurgia), também é necessário uma estrutura para o Encéfalo para serem avaliados os volumes de dose associados ao desenvolvimento de radionecrose. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para a soma dos Pulmões excluindo o PTV a ser avaliado o V20Gy.")
+
 
 
 
