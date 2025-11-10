@@ -440,11 +440,9 @@ def calcular_metricas_avancadas(dose_prescricao, dose_max_body, dose_max_ptv, do
     else:
         metricas['CI3 (Overlap/PTV)'] = None
 
-    # CI4 (Paddick) = CI2 * CI3
-    ci2 = metricas.get('CI2 (Overlap/isodose100)')
-    ci3 = metricas.get('CI3 (Overlap/PTV)')
-    if ci2 is not None and ci3 is not None:
-        metricas['CI4 (Paddick)'] = ci2 * ci3
+    # CI4 (Paddick) = Overlap² / (PTV * isodose100)
+    if volume_overlap is not None and volume_ptv and volume_iso100:
+        metricas['CI4 (Paddick)'] = (volume_overlap**2)/(volume_ptv*volume_iso100)
     else:
         metricas['CI4 (Paddick)'] = None
 
@@ -941,6 +939,7 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SRS (Radiocirurgia), também é necessário uma estrutura para o Encéfalo para serem avaliados os volumes de dose associados ao desenvolvimento de radionecrose. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para a soma dos Pulmões excluindo o PTV a ser avaliado o V20Gy.")
+
 
 
 
