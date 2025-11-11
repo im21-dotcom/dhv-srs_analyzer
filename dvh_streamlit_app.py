@@ -873,15 +873,15 @@ if uploaded_file is not None:
                 "Dose mínima PTV (cGy)": dose_min_ptv,
                 "Dose média PTV (cGy)": dose_media_ptv,
                 "STD PTV (cGy)": dose_std_ptv,
+                "D2% do PTV (cGy)": d2_ptv,
+                "D5% do PTV (cGy)": d5_ptv,
+                "D95% do PTV (cGy)": d95_ptv,
+                "D98% do PTV (cGy)", d98_ptv,
                 "Dose média Isodose 50% (cGy)": dose_media_iso50,
                 "Volume PTV (cm³)": volume_ptv,
                 "Volume Overlap (cm³)": volume_overlap,
                 "Volume Isodose 100% (cm³)": volume_iso100,
                 "Volume Isodose 50% (cm³)": volume_iso50,
-                "D2% do PTV (cGy)": d2_ptv,
-                "D5% do PTV (cGy)": d5_ptv,
-                "D95% do PTV (cGy)": d95_ptv,
-                "D98% do PTV (cGy)", d98_ptv,
             }
     
             # Adiciona volumes específicos conforme tipo de tratamento
@@ -943,6 +943,7 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SRS (Radiocirurgia), também é necessário uma estrutura para o Encéfalo para serem avaliados os volumes de dose associados ao desenvolvimento de radionecrose. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para a soma dos Pulmões excluindo o PTV a ser avaliado o V20Gy.")
+
 
 
 
