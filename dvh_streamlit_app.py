@@ -102,7 +102,43 @@ def extrair_dose_prescricao(filepath):
 
 
 def extrair_volume_por_estrutura(filepath, estrutura_alvo):
-    return extrair_dado_numerico_por_estrutura(filepath, estrutura_alvo=estrutura_alvo, chave="volume")
+    """
+    Extrai o volume da estrutura alvo (PTV, BODY, etc.) a partir da primeira linha da tabela DVH,
+    logo abaixo do cabeçalho 'Volume da estrutura [cm³]'.
+    """
+    coletando_dados = False
+    dentro_da_tabela = False
+
+    with open(filepath, 'r', encoding='utf-8') as file:
+        for linha in file:
+            linha_limpa = linha.strip()
+
+            # Detecta início da estrutura
+            if linha_limpa.lower().startswith("estrutura:") or linha_limpa.lower().startswith("structure:"):
+                nome_estrutura = linha_limpa.split(":", 1)[-1].strip().lower()
+                coletando_dados = (nome_estrutura == estrutura_alvo.strip().lower())
+                dentro_da_tabela = False
+                continue
+
+            if not coletando_dados:
+                continue
+
+            # Detecta o início da tabela
+            if "Dose relativa [%]" in linha and "Volume da estrutura" in linha:
+                dentro_da_tabela = True
+                continue
+
+            # Primeira linha útil da tabela
+            if dentro_da_tabela:
+                partes = linha_limpa.split()
+                if len(partes) == 3:
+                    try:
+                        volume = float(partes[2].replace(',', '.'))
+                        return volume
+                    except ValueError:
+                        return None
+
+    return None
 
 
 def extrair_dado_numerico_por_estrutura(filepath, estrutura_alvo, chave):
@@ -943,6 +979,7 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SRS (Radiocirurgia), também é necessário uma estrutura para o Encéfalo para serem avaliados os volumes de dose associados ao desenvolvimento de radionecrose. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para a soma dos Pulmões excluindo o PTV a ser avaliado o V20Gy.")
+
 
 
 
