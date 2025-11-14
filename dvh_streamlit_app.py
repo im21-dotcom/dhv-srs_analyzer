@@ -710,6 +710,50 @@ if uploaded_file is not None:
 
     st.success("✅ Arquivo carregado com sucesso!")
 
+        # ---------------------------------------------------------------
+    #  🔍 VALIDAÇÃO DO FORMATO DO ARQUIVO DVH
+    # ---------------------------------------------------------------
+    formato_ok = True
+    tipo_ok = False
+    cabecalho_ok = False
+
+    try:
+        with open(caminho, "r", encoding="utf-8") as f:
+            linhas = f.readlines()
+
+        # --- Verifica o campo "Tipo:"
+        for linha in linhas:
+            if linha.lower().startswith("tipo:"):
+                if "histograma de dose volume cumulativo" in linha.lower():
+                    tipo_ok = True
+                break  # encontrou a linha "Tipo:"
+
+        # --- Verifica o cabeçalho do DVH
+        for linha in linhas:
+            if "Dose" in linha and "Volume" in linha:
+                texto = linha.strip().lower()
+                if texto == "dose [cgy]   dose relativa [%] volume da estrutura [cm³]".lower():
+                    cabecalho_ok = True
+                break
+
+        # --- Resultado final da validação
+        formato_ok = tipo_ok and cabecalho_ok
+
+    except Exception:
+        formato_ok = False
+
+    # Se formato estiver incorreto, interrompe o app
+    if not formato_ok:
+        st.error(
+            "❌ O formato do DVH está incorreto.\n\n"
+            "Por favor, antes de exportar os dados tabulados do DVH, selecione:\n"
+            "- DVH cumulativo\n"
+            "- Dose absoluta\n"
+            "- Volume absoluto."
+        )
+        st.stop()
+
+
     # Mostrar seletor de frações apenas se for SRS
     if tipo_tratamento == "SRS (Radiocirurgia)":
         n_frações = st.sidebar.selectbox("Selecione o número de frações:", [1, 3, 5])
@@ -979,6 +1023,7 @@ if uploaded_file is not None:
 
 else:
     st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SRS (Radiocirurgia), também é necessário uma estrutura para o Encéfalo para serem avaliados os volumes de dose associados ao desenvolvimento de radionecrose. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para a soma dos Pulmões excluindo o PTV a ser avaliado o V20Gy.")
+
 
 
 
