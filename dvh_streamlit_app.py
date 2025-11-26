@@ -1022,23 +1022,24 @@ if uploaded_file is not None:
         st.markdown(f"[📊 Abrir planilha no Google Sheets]({url})", unsafe_allow_html=True)
 
 else:
-    st.info("Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto, contendo, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, e Isodose de 50%. Para o caso de SRS (Radiocirurgia), também é necessário uma estrutura para o Encéfalo para serem avaliados os volumes de dose associados ao desenvolvimento de radionecrose. Para o caso de SBRT de Pulmão, também é necessário uma estrutura para a soma dos Pulmões excluindo o PTV a ser avaliado o V20Gy.")
+    if tipo_tratamento == "SRS (Radiocirurgia)":
+        st.info(
+            "Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. "
+            "O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto. "
+            "Deve conter, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, Isodose de 50% e Encéfalo."
+        )
 
+    elif tipo_tratamento == "SBRT de Pulmão":
+        st.info(
+            "Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. "
+            "O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto. "
+            "Deve conter, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, Isodose de 50% e Soma dos Pulmões excluindo o PTV."
+        )
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    elif tipo_tratamento == "SBRT de Próstata":
+        st.info(
+            "Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. "
+            "O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto. "
+            "Deve conter, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, Isodose de 50%."
+        )
 
