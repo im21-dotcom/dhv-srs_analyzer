@@ -1026,20 +1026,21 @@ else:
         st.info(
             "Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. "
             "O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto. "
-            "Deve conter, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, Isodose de 50% e Encéfalo."
+            "No caso de SRS, o DVH deve conter, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, Isodose de 50% e Encéfalo."
         )
 
     elif tipo_tratamento == "SBRT de Pulmão":
         st.info(
             "Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. "
             "O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto. "
-            "Deve conter, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, Isodose de 50% e Soma dos Pulmões excluindo o PTV."
+            "No caso de SBRT de Pulmão, o DVH deve conter, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, Isodose de 50% e Soma dos Pulmões excluindo o PTV."
         )
 
     elif tipo_tratamento == "SBRT de Próstata":
         st.info(
             "Por favor, selecione o tipo de tratamento na barra lateral. Em seguida, envie um arquivo .txt de DVH tabulado em Upload do Arquivo para iniciar a análise. "
             "O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto. "
-            "Deve conter, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, Isodose de 50%."
+            "No caso de SBRT de Próstata, o DVH deve conter, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, Isodose de 50%."
         )
+
 
