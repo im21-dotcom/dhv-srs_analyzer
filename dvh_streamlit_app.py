@@ -813,6 +813,7 @@ if uploaded_file is not None:
         'HI2 (Dmax_PTV/D_prescricao)': 1,
         'HI3 ((D2-D98)/D_prescricao)': 0,
         'HI4 ((D5-D95)/D_prescricao)': 0,
+        'HI5 (S-índex)': 0,
         'Gn (Dose integral[PTV]/Dose integral[V50%])': 1,
     }
     
@@ -1042,5 +1043,6 @@ else:
             "O DVH tabulado precisa ser de um gráfico cumulativo, com dose absoluta e volume absoluto. "
             "No caso de SBRT de Próstata, o DVH deve conter, no mínimo, as estruturas de Corpo, PTV, Interseção entre o PTV e a Isodose de Prescrição, Isodose de 50%."
         )
+
 
 
